@@ -8,9 +8,9 @@ import getPageTitle from '@/utils/get-page-title'
 
 NProgress.configure({ showSpinner: false }) // NProgress Configuration
 
-const whiteList = ['/login', '/auth-redirect'] // no redirect whitelist
+const whiteList = ['/login', '/register', '/getCaptcha', '/auth-redirect'] // no redirect whitelist
 
-router.beforeEach(async(to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   // start progress bar
   NProgress.start()
 
@@ -22,7 +22,7 @@ router.beforeEach(async(to, from, next) => {
 
   if (hasToken) {
     if (to.path === '/login') {
-      // if is logged in, redirect to the home page
+      // if logged in, redirect to the home page
       next({ path: '/' })
       NProgress.done() // hack: https://github.com/PanJiaChen/vue-element-admin/pull/2939
     } else {
@@ -33,7 +33,6 @@ router.beforeEach(async(to, from, next) => {
       } else {
         try {
           // get user info
-          // note: roles must be a object array! such as: ['admin'] or ,['developer','editor']
           const { roles } = await store.dispatch('user/getInfo')
 
           // generate accessible routes map based on roles
@@ -55,7 +54,7 @@ router.beforeEach(async(to, from, next) => {
       }
     }
   } else {
-    /* has no token*/
+    // if not logged in
 
     if (whiteList.indexOf(to.path) !== -1) {
       // in the free login whitelist, go directly

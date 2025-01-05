@@ -13,73 +13,66 @@ const service = axios.create({
 // request interceptor
 service.interceptors.request.use(
   config => {
-    // do something before request is sent
+    // 不需要 Token 的接口列表
+    const noTokenRequired = ['/login', '/getCaptcha', '/register'] // 根据你的需求来添加接口路径
 
-    if (store.getters.token) {
-      // let each request carry token
-      // ['X-Token'] is a custom headers key
-      // please modify it according to the actual situation
+    // 判断请求路径是否包含在 noTokenRequired 列表中
+    if (store.getters.token && !noTokenRequired.includes(config.url)) {
+      // 如果有 token 且当前请求不在 noTokenRequired 中，则添加 Token
       config.headers['X-Token'] = getToken()
     }
+
     return config
   },
   error => {
-    // do something with request error
     console.log(error) // for debug
-    return Promise.reject(error)
+    return Promise.reject(error) // 继续处理错误
   }
 )
 
 // response interceptor
 service.interceptors.response.use(
   /**
-   * If you want to get http information such as headers or status
-   * Please return  response => response
-  */
-
-  /**
-   * Determine the request status by custom code
-   * Here is just an example
-   * You can also judge the status by HTTP Status Code
+   * 这里直接处理返回的响应数据
    */
   response => {
     const res = response.data
 
-    // if the custom code is not 20000, it is judged as an error.
-    if (res.code !== 20000) {
+    // 判断返回的 code 是否不等于 0
+    if (res.code !== 0) {
+      // 如果 code 不等于 0，说明发生了错误，弹出错误消息
       Message({
-        message: res.message || 'Error',
+        message: res.message || '操作失败',
         type: 'error',
         duration: 5 * 1000
       })
 
-      // 50008: Illegal token; 50012: Other clients logged in; 50014: Token expired;
-      if (res.code === 50008 || res.code === 50012 || res.code === 50014) {
-        // to re-login
-        MessageBox.confirm('You have been logged out, you can cancel to stay on this page, or log in again', 'Confirm logout', {
-          confirmButtonText: 'Re-Login',
-          cancelButtonText: 'Cancel',
-          type: 'warning'
-        }).then(() => {
-          store.dispatch('user/resetToken').then(() => {
-            location.reload()
-          })
-        })
-      }
-      return Promise.reject(new Error(res.message || 'Error'))
+      // 可以在这里根据实际需求做更多的处理，比如跳转登录页面、清除 Token 等
+      // 例如：
+      // if (res.code === 50008 || res.code === 50012 || res.code === 50014) {
+      //   store.dispatch('user/resetToken').then(() => {
+      //     location.reload();
+      //   });
+      // }
+
+      return Promise.reject(new Error(res.message || '操作失败')) // 返回错误
     } else {
+      // 如果 code 为 0，表示请求成功，直接返回数据
       return res
     }
   },
   error => {
-    console.log('err' + error) // for debug
+    console.log('response error:', error) // 打印错误信息
+
+    // 出现错误时弹出消息
     Message({
-      message: error.message,
+      message: error.message || '请求失败',
       type: 'error',
       duration: 5 * 1000
     })
-    return Promise.reject(error)
+    return Promise.reject(error) // 继续返回错误
   }
 )
+
 
 export default service

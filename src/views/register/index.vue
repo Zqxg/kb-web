@@ -1,14 +1,14 @@
 <template>
-  <el-row class="login-container" type="flex" justify="center">
+  <el-row class="register-container" type="flex" justify="center">
     <el-col :span="8">
-      <div class="login-form-container">
+      <div class="register-form-container">
         <el-card class="box-card">
-          <h2 class="title">用户登录</h2>
+          <h2 class="title">用户注册</h2>
 
-          <!-- 登录表单 -->
+          <!-- 注册表单 -->
           <el-form :model="form" ref="form" status-icon>
             <el-form-item label="手机号" :rules="[{ required: true, message: '请输入手机号', trigger: 'blur' }]">
-              <el-input ref="phoneInput" v-model="form.phone" placeholder="请输入手机号" />
+              <el-input v-model="form.phone" placeholder="请输入手机号" />
             </el-form-item>
 
             <el-form-item label="密码" :rules="[{ required: true, message: '请输入密码', trigger: 'blur' }]">
@@ -28,14 +28,15 @@
               <el-image :src="captchaImage" alt="验证码" fit="contain" />
             </el-form-item>
 
+
             <el-form-item>
-              <el-button type="primary" @click="handleLogin" :loading="isLoginLoading" class="login-btn">登录</el-button>
+              <el-button type="primary" @click="handleRegister" :loading="isRegisterLoading" class="register-btn">注册</el-button>
             </el-form-item>
           </el-form>
 
-          <!-- 注册链接 -->
-          <div class="register-link">
-            <router-link to="/register">没有账号？点击注册</router-link>
+          <!-- 登录链接 -->
+          <div class="login-link">
+            <router-link to="/login">已有账号？点击登录</router-link>
           </div>
         </el-card>
       </div>
@@ -44,7 +45,7 @@
 </template>
 
 <script>
-import { login, getCaptcha } from '@/api/user'
+import { register, getCaptcha } from '@/api/user' // 假设你已经有 register API
 
 export default {
   data() {
@@ -53,11 +54,11 @@ export default {
         phone: '',
         captchaAnswer: '',
         password: '',
-        captchaId: ''
+        captchaId: '' // 存储 captchaId
       },
-      captchaImage: '',
+      captchaImage: '', // 存储验证码图像
       isCaptchaLoading: false,
-      isLoginLoading: false
+      isRegisterLoading: false
     }
   },
   methods: {
@@ -76,22 +77,21 @@ export default {
       }
     },
 
-    // 登录功能
-    async handleLogin() {
-      this.isLoginLoading = true
+    // 注册功能
+    async handleRegister() {
+      this.isRegisterLoading = true
       try {
-        const res = await login(this.form)
-        if (res.retCode === 0) {
-          // todo：获取tokon存储在本地
-          this.$router.push({ path: '/' })
+        const res = await register(this.form) // 发送注册请求
+        if (res.success) {
+          this.$router.push({ path: '/' }) // 注册成功后跳转到首页
         } else {
-          this.$message.error('登录失败')
+          this.$message.error('注册失败')
         }
       } catch (error) {
-        console.error('登录失败:', error)
-        this.$message.error('登录失败')
+        console.error('注册失败:', error)
+        this.$message.error('注册失败')
       } finally {
-        this.isLoginLoading = false
+        this.isRegisterLoading = false
       }
     }
   }
@@ -99,11 +99,11 @@ export default {
 </script>
 
 <style scoped>
-.login-container {
+.register-container {
   margin-top: 50px;
 }
 
-.login-form-container {
+.register-form-container {
   padding: 30px;
 }
 
@@ -118,11 +118,11 @@ export default {
   font-weight: bold;
 }
 
-.login-btn {
+.register-btn {
   width: 100%;
 }
 
-.register-link {
+.login-link {
   text-align: center;
   margin-top: 20px;
 }
