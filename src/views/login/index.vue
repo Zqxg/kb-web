@@ -84,7 +84,7 @@ export default {
       try {
         await this.login(this.form) // 调用 Vuex 的 login action
         this.$message.success('登录成功')
-        this.$router.push({ path: '/' }) // 登录成功后跳转到主页
+        this.$router.push({ path: this.redirect }) // 登录成功后跳转到主页
       } catch (error) {
         console.error('登录失败:', error)
         this.$message.error('登录失败')
