@@ -20,6 +20,16 @@ export function validUsername(str) {
 }
 
 /**
+ * 验证手机号是否符合中国的格式
+ * @param {string} str
+ * @returns {Boolean}
+ */
+export function validPhoneNumber(str) {
+  const phoneRegex = /^1[0-9]\d{9}$/ // 中国手机号正则：以1开头，第二位为3-9之间的数字，后面9位任意数字
+  return phoneRegex.test(str.trim())
+}
+
+/**
  * @param {string} url
  * @returns {Boolean}
  */

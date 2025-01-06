@@ -1,4 +1,4 @@
-import { login, logout, getUserInfo } from '@/api/user'
+import { login, getCaptcha, logout, getUserInfo } from '@/api/user'
 import { getToken, setToken, removeToken } from '@/utils/auth'
 import router, { resetRouter } from '@/router'
 
@@ -6,11 +6,13 @@ const state = {
   token: getToken(),
   nickname: '',
   userId: '',
-  role: '',
+  role: [],
   phone: '',
   email: '',
   collegeId: '',
-  studentId: ''
+  studentId: '',
+  captchaId: '',
+  captchaImage: ''
 }
 
 const mutations = {
@@ -37,8 +39,14 @@ const mutations = {
   },
   SET_STUDENTID: (state, studentId) => {
     state.studentId = studentId
+  },
+  SET_CAPTCHA(state, captchaData) {
+    state.captchaId = captchaData.captchaId
+    state.captchaImage = captchaData.CaptchaBase64 // 假设验证码是 base64 编码的
   }
 }
+
+let isFetchingUserInfo = false
 
 const actions = {
   // user login
@@ -57,35 +65,59 @@ const actions = {
       })
     })
   },
+  // get user captcha
+  getCaptcha({ commit }) {
+    return new Promise((resolve, reject) => {
+      getCaptcha().then(response => {
+        const { data } = response
+        // 假设后端返回的数据格式是 { captchaId: 'captchaId', CaptchaBase64: 'captchaBase64' }
+        commit('SET_CAPTCHA', data) // 保存验证码信息到 Vuex
+        resolve(response)
+      }).catch(error => {
+        reject(error)
+      })
+    })
+  },
 
   // get user info
   getUserInfo({ commit, state }) {
     return new Promise((resolve, reject) => {
-      getUserInfo(state.token).then(response => {
-        const { data } = response
+      if (isFetchingUserInfo) {
+        return // 如果正在请求，直接返回
+      }
 
-        if (!data) {
-          reject('Verification failed, please Login again.')
-        }
+      isFetchingUserInfo = true // 开始请求
+      getUserInfo(state.token)
+        .then(response => {
+          const { data } = response
 
-        const { userId, phone, nickname, roleType, email, collegeId, studentId } = data
+          if (!data) {
+            reject('Verification failed, please Login again.')
+          }
 
-        // roles must be a non-empty array
-        if (!roleType || roleType.length <= 0) {
-          reject('getInfo: roles must be a non-null array!')
-        }
+          const { userId, phone, nickname, roleType, email, collegeId, studentId } = data
 
-        commit('SET_ROLE', roleType)
-        commit('SET_NAME', nickname)
-        commit('SET_USERID', userId)
-        commit('SET_PHONE', phone)
-        commit('SET_EMAIL', email)
-        commit('SET_COLLEGEID', collegeId)
-        commit('SET_STUDENTID', studentId)
-        resolve(data)
-      }).catch(error => {
-        reject(error)
-      })
+          // 如果角色类型为空，则抛出错误
+          if (!roleType || roleType.length <= 0) {
+            reject('getInfo: roles must be a non-null array!')
+          }
+          commit('SET_ROLE', roleType)
+          commit('SET_NAME', nickname)
+          commit('SET_USERID', userId)
+          commit('SET_PHONE', phone)
+          commit('SET_EMAIL', email)
+          commit('SET_COLLEGEID', collegeId)
+          commit('SET_STUDENTID', studentId)
+
+          resolve(data)
+        })
+        .catch(error => {
+          this.$store.dispatch('user/logout', state.token)
+          reject(error)
+        })
+        .finally(() => {
+          isFetchingUserInfo = false // 请求结束，重置标志
+        })
     })
   },
 

@@ -81,12 +81,9 @@ export default {
     async handleRegister() {
       this.isRegisterLoading = true
       try {
-        const res = await register(this.form) // 发送注册请求
-        if (res.success) {
-          this.$router.push({ path: '/' }) // 注册成功后跳转到首页
-        } else {
-          this.$message.error('注册失败')
-        }
+        await register(this.form) // 发送注册请求
+        this.$message.success('注册成功')
+        this.$router.push({ path: '/login' }) // 注册成功后跳转到登录页
       } catch (error) {
         console.error('注册失败:', error)
         this.$message.error('注册失败')

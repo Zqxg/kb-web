@@ -28,14 +28,19 @@ export function getUserInfo(token) {
   return request({
     url: '/v1/user/getUserInfo',
     method: 'get',
-    params: { token }
+    headers: {
+      'X-Token': token // 这里是设置请求头中的 X-Token
+    }
   })
 }
 
-export function logout() {
+export function logout(token) {
   return request({
     url: '/v1/user/logout',
-    method: 'get'
+    method: 'get',
+    headers: {
+      'X-Token': token // 这里是设置请求头中的 X-Token
+    }
   })
 }
 
