@@ -34,13 +34,10 @@ export function getUserInfo(token) {
   })
 }
 
-export function logout(token) {
+export function logout() {
   return request({
     url: '/v1/user/logout',
-    method: 'get',
-    headers: {
-      'X-Token': token // 这里是设置请求头中的 X-Token
-    }
+    method: 'get'
   })
 }
 

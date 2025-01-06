@@ -6,7 +6,7 @@ const state = {
   token: getToken(),
   nickname: '',
   userId: '',
-  role: [],
+  roles: [],
   phone: '',
   email: '',
   collegeId: '',
@@ -20,7 +20,7 @@ const mutations = {
     state.token = token
   },
   SET_ROLE: (state, role) => {
-    state.role = role
+    state.roles = role
   },
   SET_NAME: (state, name) => {
     state.nickname = name
@@ -101,7 +101,25 @@ const actions = {
           if (!roleType || roleType.length <= 0) {
             reject('getInfo: roles must be a non-null array!')
           }
-          commit('SET_ROLE', roleType)
+          let mappedRole = ['common_user']
+          switch (roleType) {
+            case 0:
+              mappedRole = ['common_user']
+              break
+            case 1:
+              mappedRole = ['student_user']
+              break
+            case 2:
+              mappedRole = ['student_admin']
+              break
+            case 3:
+              mappedRole = ['super_admin']
+              break
+            default:
+              mappedRole = ['common_user']
+          }
+          console.log('data:', data)
+          commit('SET_ROLE', mappedRole)
           commit('SET_NAME', nickname)
           commit('SET_USERID', userId)
           commit('SET_PHONE', phone)
@@ -112,7 +130,8 @@ const actions = {
           resolve(data)
         })
         .catch(error => {
-          this.$store.dispatch('user/logout', state.token)
+          console.log('error:', error)
+          this.$store.dispatch('user/logout')
           reject(error)
         })
         .finally(() => {
@@ -145,25 +164,20 @@ const actions = {
   resetToken({ commit }) {
     return new Promise(resolve => {
       commit('SET_TOKEN', '')
-      commit('SET_ROLES', [])
+      commit('SET_ROLE', [])
       removeToken()
       resolve()
     })
   },
 
   // dynamically modify permissions
-  async changeRoles({ commit, dispatch }, role) {
-    const token = role + '-token'
-
-    commit('SET_TOKEN', token)
-    setToken(token)
-
-    const { roles } = await dispatch('getInfo')
+  async changeRoles({ commit, dispatch }) {
+    const { role } = await dispatch('getUserInfo')
 
     resetRouter()
 
     // generate accessible routes map based on roles
-    const accessRoutes = await dispatch('permission/generateRoutes', roles, { root: true })
+    const accessRoutes = await dispatch('permission/generateRoutes', role, { root: true })
     // dynamically add accessible routes
     router.addRoutes(accessRoutes)
 
