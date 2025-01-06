@@ -28,7 +28,6 @@
               <el-image :src="captchaImage" alt="验证码" fit="contain" />
             </el-form-item>
 
-
             <el-form-item>
               <el-button type="primary" @click="handleRegister" :loading="isRegisterLoading" class="register-btn">注册</el-button>
             </el-form-item>

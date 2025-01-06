@@ -49,6 +49,11 @@ export default {
     isCollapse() {
       return !this.sidebar.opened
     }
+  },
+  watch: {
+    permission_routes(newRoutes) {
+      console.log('permission_routes:', newRoutes) // 添加打印来调试数据
+    }
   }
 }
 </script>
