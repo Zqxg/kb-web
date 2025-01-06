@@ -24,9 +24,9 @@ export function getCaptcha() {
   })
 }
 
-export function getInfo(token) {
+export function getUserInfo(token) {
   return request({
-    url: '/vue-element-admin/user/info',
+    url: '/v1/user/getUserInfo',
     method: 'get',
     params: { token }
   })
@@ -34,7 +34,14 @@ export function getInfo(token) {
 
 export function logout() {
   return request({
-    url: '/vue-element-admin/user/logout',
-    method: 'post'
+    url: '/v1/user/logout',
+    method: 'get'
+  })
+}
+
+export function cancel() {
+  return request({
+    url: '/v1/user/cancel',
+    method: 'get'
   })
 }

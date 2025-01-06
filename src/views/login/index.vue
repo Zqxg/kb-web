@@ -45,6 +45,7 @@
 
 <script>
 import { login, getCaptcha } from '@/api/user'
+import { mapActions } from 'vuex'
 
 export default {
   data() {
@@ -61,6 +62,7 @@ export default {
     }
   },
   methods: {
+    ...mapActions('user', ['login']), // 映射 Vuex actions
     // 获取验证码
     async getCaptcha() {
       this.isCaptchaLoading = true
@@ -80,13 +82,9 @@ export default {
     async handleLogin() {
       this.isLoginLoading = true
       try {
-        const res = await login(this.form)
-        if (res.retCode === 0) {
-          // todo：获取tokon存储在本地
-          this.$router.push({ path: '/' })
-        } else {
-          this.$message.error('登录失败')
-        }
+        await this.login(this.form) // 调用 Vuex 的 login action
+        this.$message.success('登录成功')
+        this.$router.push({ path: '/' }) // 登录成功后跳转到主页
       } catch (error) {
         console.error('登录失败:', error)
         this.$message.error('登录失败')
