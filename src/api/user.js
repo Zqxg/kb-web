@@ -47,3 +47,17 @@ export function cancel() {
     method: 'get'
   })
 }
+
+export function getCollege() {
+  return request({
+    url: '/v1/user/getCollege',
+    method: 'get'
+  })
+}
+
+export function getCollegeList() {
+  return request({
+    url: '/v1/user/getCollegeList',
+    method: 'get'
+  })
+}

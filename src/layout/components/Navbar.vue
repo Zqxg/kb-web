@@ -22,7 +22,8 @@
         <div class="avatar-wrapper">
           <img
             :src="require('@/assets/avatar/default-image.png') + '?imageView2/1/w/80/h/80'"
-            class="user-avatar">
+            class="user-avatar"
+          >
           <i class="el-icon-caret-bottom" />
         </div>
         <el-dropdown-menu slot="dropdown">
@@ -78,6 +79,7 @@ export default {
     },
     async logout() {
       await this.$store.dispatch('user/logout')
+      this.$message.success('退出成功')
       this.$router.push(`/login?redirect=${this.$route.fullPath}`)
     }
   }

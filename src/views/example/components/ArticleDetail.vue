@@ -1,7 +1,6 @@
 <template>
   <div class="createPost-container">
     <el-form ref="postForm" :model="postForm" :rules="rules" class="form-container">
-
       <sticky :z-index="10" :class-name="'sub-navbar '+postForm.status">
         <CommentDropdown v-model="postForm.comment_disabled" />
         <PlatformDropdown v-model="postForm.platforms" />
@@ -26,23 +25,40 @@
             </el-form-item>
 
             <div class="postInfo-container">
-              <el-row>
+              <el-row>  <!-- 增加间距 -->
+                <!-- 作者字段 -->
                 <el-col :span="8">
-                  <el-form-item label-width="60px" label="Author:" class="postInfo-container-item">
-                    <el-select v-model="postForm.author" :remote-method="getRemoteUserList" filterable default-first-option remote placeholder="Search user">
-                      <el-option v-for="(item,index) in userListOptions" :key="item+index" :label="item" :value="item" />
+                  <el-form-item label="作者:" class="postInfo-container-item">
+                    <el-input v-model="postForm.author" :readonly="true" placeholder="Author" />
+                  </el-form-item>
+                </el-col>
+
+                <!-- 分组字段 -->
+                <el-col :span="8">
+                  <el-form-item label="分组:" class="postInfo-container-item">
+                    <el-select v-model="postForm.group" placeholder="选择分组">
+                      <el-option
+                        v-for="group in groups"
+                        :key="group.collegeId"
+                        :label="group.collegeName"
+                        :value="group.collegeName"
+                      />
                     </el-select>
                   </el-form-item>
                 </el-col>
 
-                <el-col :span="10">
-                  <el-form-item label-width="120px" label="Publish Time:" class="postInfo-container-item">
-                    <el-date-picker v-model="displayTime" type="datetime" format="yyyy-MM-dd HH:mm:ss" placeholder="Select date and time" />
+                <!-- 选择上传时间 -->
+                <el-col :span="8">
+                  <el-form-item label="选择上传时间:" class="postInfo-container-item">
+                    <el-date-picker v-model="displayTime" type="datetime" format="yyyy-MM-dd HH:mm:ss" placeholder="选择上传时间" />
                   </el-form-item>
                 </el-col>
+              </el-row>
 
+              <el-row gutter="{20}">
+                <!-- 重要性字段 -->
                 <el-col :span="6">
-                  <el-form-item label-width="90px" label="Importance:" class="postInfo-container-item">
+                  <el-form-item label="重要性:" class="postInfo-container-item">
                     <el-rate
                       v-model="postForm.importance"
                       :max="3"
@@ -55,11 +71,12 @@
                 </el-col>
               </el-row>
             </div>
+
           </el-col>
         </el-row>
 
         <el-form-item style="margin-bottom: 40px;" label-width="70px" label="Summary:">
-          <el-input v-model="postForm.content_short" :rows="1" type="textarea" class="article-textarea" autosize placeholder="Please enter the content" />
+          <el-input v-model="postForm.content_short" :rows="1" type="textarea" class="article-textarea" autosize placeholder="可以编写摘要" />
           <span v-show="contentShortLength" class="word-counter">{{ contentShortLength }}words</span>
         </el-form-item>
 
@@ -67,8 +84,23 @@
           <Tinymce ref="editor" v-model="postForm.content" :height="400" />
         </el-form-item>
 
-        <el-form-item prop="image_uri" style="margin-bottom: 30px;">
-          <Upload v-model="postForm.image_uri" />
+        <!-- MultiFileUpload Component for file uploads -->
+        <el-form-item label="附件上传:">
+          <el-row gutter="{20}">
+            <el-col :span="8">
+              <el-button
+                type="primary"
+                plain
+                icon="el-icon-plus"
+                size="mini"
+                :disabled="notEdit"
+                @click="handleAdd"
+              >上传</el-button>
+            </el-col>
+            <el-col :span="16">
+              <MultiFileUpload ref="fileUploadDialog" v-model="postForm.file_uris" :file-size="5" :file-type="['.jpg', '.jpeg', '.png', '.doc', '.xls', '.xlsx', '.ppt', '.txt', '.pdf']" />
+            </el-col>
+          </el-row>
         </el-form-item>
       </div>
     </el-form>
@@ -77,32 +109,46 @@
 
 <script>
 import Tinymce from '@/components/Tinymce'
-import Upload from '@/components/Upload/SingleImage3'
 import MDinput from '@/components/MDinput'
 import Sticky from '@/components/Sticky' // 粘性header组件
 import { validURL } from '@/utils/validate'
-import { fetchArticle } from '@/api/article'
-import { searchUser } from '@/api/remote-search'
+import { createArticle, fetchArticle } from '@/api/article'
 import Warning from './Warning'
 import { CommentDropdown, PlatformDropdown, SourceUrlDropdown } from './Dropdown'
+import MultiFileUpload from '@/components/Upload/MultiFileUpload' // 引入多文件上传组件
+import { getCollegeList, getUserInfo } from '@/api/user'
 
 const defaultForm = {
   status: 'draft',
   title: '', // 文章题目
   content: '', // 文章内容
+  author: '',
+  user_id: '',
   content_short: '', // 文章摘要
   source_uri: '', // 文章外链
   image_uri: '', // 文章图片
+  group: '', // 分组
+  group_id: '',
   display_time: undefined, // 前台展示时间
   id: undefined,
   platforms: ['a-platform'],
   comment_disabled: false,
-  importance: 0
+  importance: 0,
+  file_uris: [] // 新增的附件字段
 }
 
 export default {
   name: 'ArticleDetail',
-  components: { Tinymce, MDinput, Upload, Sticky, Warning, CommentDropdown, PlatformDropdown, SourceUrlDropdown },
+  components: {
+    Tinymce,
+    MDinput,
+    Sticky,
+    Warning,
+    CommentDropdown,
+    PlatformDropdown,
+    SourceUrlDropdown,
+    MultiFileUpload
+  },
   props: {
     isEdit: {
       type: Boolean,
@@ -144,9 +190,12 @@ export default {
         image_uri: [{ validator: validateRequire }],
         title: [{ validator: validateRequire }],
         content: [{ validator: validateRequire }],
-        source_uri: [{ validator: validateSourceUri, trigger: 'blur' }]
+        source_uri: [{ validator: validateSourceUri, trigger: 'blur' }],
+        author: [{ required: true, message: 'Author is required', trigger: 'blur' }],
+        group: [{ required: true, message: 'Group is required', trigger: 'blur' }]
       },
-      tempRoute: {}
+      tempRoute: {},
+      groups: []
     }
   },
   computed: {
@@ -171,7 +220,8 @@ export default {
       const id = this.$route.params && this.$route.params.id
       this.fetchData(id)
     }
-
+    this.fetchUserInfo()
+    this.fetchCollegeList()
     // Why need to make a copy of this.$route here?
     // Because if you enter this page and quickly switch tag, may be in the execution of the setTagsViewTitle function, this.$route is no longer pointing to the current page
     // https://github.com/PanJiaChen/vue-element-admin/issues/1221
@@ -209,19 +259,30 @@ export default {
       this.$refs.postForm.validate(valid => {
         if (valid) {
           this.loading = true
-          this.$notify({
-            title: '成功',
-            message: '发布文章成功',
-            type: 'success',
-            duration: 2000
-          })
+          // 使用 Axios 或其他 HTTP 库提交表单数据到后端
+          this.submitToBackend(this.postForm)
+          // 设置状态
           this.postForm.status = 'published'
-          this.loading = false
         } else {
-          console.log('error submit!!')
+          console.log('发布失败!')
           return false
         }
       })
+    },
+
+    submitToBackend(formData) {
+      // 使用 Axios 提交表单数据
+      createArticle(formData)
+        .then(response => {
+          // 请求成功后的回调
+          console.log('文章发布成功', response.data)
+          this.loading = false
+        })
+        .catch(error => {
+          // 请求失败后的回调
+          console.error('发布失败', error)
+          this.loading = false
+        })
     },
     draftForm() {
       if (this.postForm.content.length === 0 || this.postForm.title.length === 0) {
@@ -239,11 +300,34 @@ export default {
       })
       this.postForm.status = 'draft'
     },
-    getRemoteUserList(query) {
-      searchUser(query).then(response => {
-        if (!response.data.items) return
-        this.userListOptions = response.data.items.map(v => v.name)
+    // 获取当前用户信息
+    fetchUserInfo() {
+      // 假设有方法获取当前登录用户的信息，或者通过接口获取
+      getUserInfo().then(response => {
+        if (response.data) {
+          const user = response.data
+          // 将用户信息填充到表单的author字段
+          this.postForm.author = user.nickname
+          this.postForm.user_id = user.userId
+        }
+      }).catch(error => {
+        console.error('获取用户信息失败', error)
       })
+    },
+    // 获取学院信息列表
+    fetchCollegeList() {
+      getCollegeList().then(response => {
+        if (response.data) {
+          // 将学院信息填充到表单的college字段
+          this.groups = JSON.parse(JSON.stringify(response.data.collegeList)) // 深拷贝
+          console.log('groups:', this.groups)
+        }
+      }).catch(error => {
+        console.error('获取学院信息失败', error)
+      })
+    },
+    handleAdd() {
+      this.$refs.fileUploadDialog.visible = true
     }
   }
 }
