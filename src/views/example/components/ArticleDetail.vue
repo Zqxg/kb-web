@@ -138,7 +138,6 @@ const defaultForm = {
   user_id: '',
   content_short: '', // 文章摘要
   source_uri: '', // 文章外链
-  image_uri: '', // 文章图片
   group: '', // 分组
   group_id: '',
   display_time: undefined, // 前台展示时间
@@ -199,7 +198,6 @@ export default {
       loading: false,
       userListOptions: [],
       rules: {
-        image_uri: [{ validator: validateRequire }],
         title: [{ validator: validateRequire }],
         content: [{ validator: validateRequire }],
         source_uri: [{ validator: validateSourceUri, trigger: 'blur' }],
