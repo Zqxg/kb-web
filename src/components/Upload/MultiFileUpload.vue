@@ -28,6 +28,9 @@
           <template v-if="fileType"> 格式为 <b style="color: #f56c6c">{{ fileType.join('/') }}</b></template>
           的文件
         </div>
+        <div style="color: #f56c6c; margin-top: 10px;">
+          上传服务器后不可删除，请谨慎上传
+        </div>
       </el-upload>
 
       <!-- 文件列表 -->
@@ -116,8 +119,17 @@ export default {
     async uploadFilesToOSS(policy) {
       const uploadedFiles = []
       for (const file of this.fileList) {
-        const fileUrl = await uploadFileToOSS(file.raw, policy) // 调用OSS上传方法
-        uploadedFiles.push(fileUrl)
+        try {
+          // 上传单个文件到 OSS
+          const fileUrl = await uploadFileToOSS(file.raw, policy) // 调用 OSS 上传方法
+
+          // 将上传的文件 URL 加入文件列表
+          uploadedFiles.push({ fileName: file.name, fileUrl })
+        } catch (error) {
+          // 捕获单个文件上传的错误并提示
+          this.$message.error(`文件 ${file.name} 上传失败，请重试`)
+          console.error(`文件 ${file.name} 上传失败：`, error)
+        }
       }
       return uploadedFiles
     },

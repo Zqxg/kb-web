@@ -98,7 +98,19 @@
               >上传</el-button>
             </el-col>
             <el-col :span="16">
-              <MultiFileUpload ref="fileUploadDialog" v-model="postForm.file_uris" :file-size="5" :file-type="['.jpg', '.jpeg', '.png', '.doc', '.xls', '.xlsx', '.ppt', '.txt', '.pdf']" />
+              <MultiFileUpload ref="fileUploadDialog" v-model="postForm.uploadedFiles" :file-size="5" :file-type="['.jpg', '.jpeg', '.png', '.doc', '.xls', '.xlsx', '.ppt', '.txt', '.pdf']" @upload-success="handleUploadSuccess" />
+            </el-col>
+          </el-row>
+          <el-row v-if="postForm.uploadedFiles.length > 0">
+            <el-col :span="24">
+              <el-table :data="postForm.uploadedFiles" style="width: 100%">
+                <el-table-column prop="fileName" label="文件名" />
+                <el-table-column prop="fileUrl" label="文件 URL">
+                  <template slot-scope="scope">
+                    <a :href="scope.row.fileUrl" target="_blank">{{ scope.row.fileUrl }}</a>
+                  </template>
+                </el-table-column>
+              </el-table>
             </el-col>
           </el-row>
         </el-form-item>
@@ -134,7 +146,7 @@ const defaultForm = {
   platforms: ['a-platform'],
   comment_disabled: false,
   importance: 0,
-  file_uris: [] // 新增的附件字段
+  uploadedFiles: [] // 用于存储已上传文件的列表
 }
 
 export default {
@@ -328,6 +340,13 @@ export default {
     },
     handleAdd() {
       this.$refs.fileUploadDialog.visible = true
+    },
+    handleUploadSuccess(uploadedFiles) {
+      // 更新上传文件列表，上传成功后返回文件信息
+      this.uploadedFiles = uploadedFiles.map(file => ({
+        fileName: file.name,
+        fileUrl: file.url // 假设返回的数据包含 fileName 和 fileUrl
+      }))
     }
   }
 }
