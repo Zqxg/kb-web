@@ -3,7 +3,7 @@
     <el-form ref="postForm" :model="postForm" :rules="rules" class="form-container">
       <sticky :z-index="10" :class-name="'sub-navbar '+postForm.status">
         <CommentDropdown v-model="postForm.comment_disabled" />
-        <PlatformDropdown v-model="postForm.platforms" />
+        <VisibleRangeDropdown v-model="postForm.visibleRange" />
         <SourceUrlDropdown v-model="postForm.source_uri" />
         <el-button v-loading="loading" style="margin-left: 10px;" type="success" @click="submitForm">
           Publish
@@ -20,7 +20,7 @@
           <el-col :span="24">
             <el-form-item style="margin-bottom: 40px;" prop="title">
               <MDinput v-model="postForm.title" :maxlength="100" name="name" required>
-                Title
+                标题:
               </MDinput>
             </el-form-item>
 
@@ -75,7 +75,7 @@
           </el-col>
         </el-row>
 
-        <el-form-item style="margin-bottom: 40px;" label-width="70px" label="Summary:">
+        <el-form-item style="margin-bottom: 40px;" label-width="70px" label="摘要:">
           <el-input v-model="postForm.content_short" :rows="1" type="textarea" class="article-textarea" autosize placeholder="可以编写摘要" />
           <span v-show="contentShortLength" class="word-counter">{{ contentShortLength }}words</span>
         </el-form-item>
@@ -126,7 +126,7 @@ import Sticky from '@/components/Sticky' // 粘性header组件
 import { validURL } from '@/utils/validate'
 import { createArticle, fetchArticle } from '@/api/article'
 import Warning from './Warning'
-import { CommentDropdown, PlatformDropdown, SourceUrlDropdown } from './Dropdown'
+import { CommentDropdown, VisibleRangeDropdown, SourceUrlDropdown } from './Dropdown'
 import MultiFileUpload from '@/components/Upload/MultiFileUpload' // 引入多文件上传组件
 import { getCollegeList, getUserInfo } from '@/api/user'
 
@@ -143,7 +143,7 @@ const defaultForm = {
   group_id: '',
   display_time: undefined, // 前台展示时间
   id: undefined,
-  platforms: ['a-platform'],
+  visibleRange: 'public', // 可见范围，默认为 'public'
   comment_disabled: false,
   importance: 0,
   uploadedFiles: [] // 用于存储已上传文件的列表
@@ -157,7 +157,7 @@ export default {
     Sticky,
     Warning,
     CommentDropdown,
-    PlatformDropdown,
+    VisibleRangeDropdown,
     SourceUrlDropdown,
     MultiFileUpload
   },
