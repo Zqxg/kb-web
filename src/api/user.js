@@ -41,6 +41,14 @@ export function logout() {
   })
 }
 
+export function updateProfile(data) {
+  return request({
+    url: '/v1/user/updateProfile',
+    method: 'post',
+    data
+  })
+}
+
 export function cancel() {
   return request({
     url: '/v1/user/cancel',

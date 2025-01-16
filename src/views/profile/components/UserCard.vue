@@ -6,14 +6,34 @@
 
     <div class="user-profile">
       <div class="box-center">
-        <pan-thumb :image="user.avatar" :height="'100px'" :width="'100px'" :hoverable="false">
+        <!-- Display Avatar -->
+        <pan-thumb :image="avatar" :height="'100px'" :width="'100px'" :hoverable="false">
           <div>Hello</div>
-          {{ user.role }}
+          {{ roles.join(', ') }} <!-- Display roles -->
         </pan-thumb>
       </div>
       <div class="box-center">
-        <div class="user-name text-center">{{ user.name }}</div>
-        <div class="user-role text-center text-muted">{{ user.role | uppercaseFirst }}</div>
+        <!-- Display Nickname and Role -->
+        <div class="user-name text-center">{{ nickname }}</div>
+        <div class="user-role text-center text-muted">{{ roles.join(', ') | uppercaseFirst }}</div>
+      </div>
+    </div>
+    <!-- Display Other User Information -->
+    <div class="user-details">
+      <div class="user-details user-bio-section">
+        <div class="user-bio-section-header"><svg-icon icon-class="user" /><span> Info</span></div>
+        <div class="user-detail-item">
+          <strong>Email:</strong> {{ email }}
+        </div>
+        <div class="user-detail-item">
+          <strong>Phone:</strong> {{ phone }}
+        </div>
+        <div class="user-detail-item">
+          <strong>College ID:</strong> {{ collegeId }}
+        </div>
+        <div class="user-detail-item">
+          <strong>Student ID:</strong> {{ studentId }}
+        </div>
       </div>
     </div>
 
@@ -53,22 +73,15 @@
 </template>
 
 <script>
+import { mapState } from 'vuex'
 import PanThumb from '@/components/PanThumb'
 
 export default {
   components: { PanThumb },
-  props: {
-    user: {
-      type: Object,
-      default: () => {
-        return {
-          name: '',
-          email: '',
-          avatar: '',
-          role: ''
-        }
-      }
-    }
+  computed: {
+    ...mapState('user', [
+      'nickname', 'email', 'roles', 'phone', 'avatar', 'collegeId', 'studentId'
+    ])
   }
 }
 </script>
@@ -128,6 +141,30 @@ export default {
       padding-bottom: 10px;
       margin-bottom: 10px;
       font-weight: bold;
+    }
+  }
+}
+
+.user-details {
+  margin-top: 20px;
+  color: #606266;
+
+  .user-bio-section {
+    font-size: 14px;
+    padding: 5px 0;
+
+    .user-bio-section-header {
+      border-bottom: 1px solid #dfe6ec;
+      padding-bottom: 5px;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
+    .user-detail-item {
+      padding: 5px 0;
+      .strong {
+        font-weight: bold;
+      }
     }
   }
 }

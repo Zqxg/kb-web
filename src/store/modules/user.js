@@ -1,4 +1,4 @@
-import { login, getCaptcha, logout, getUserInfo } from '@/api/user'
+import { login, getCaptcha, logout, getUserInfo, updateProfile } from '@/api/user'
 import { getToken, setToken, removeToken } from '@/utils/auth'
 import router, { resetRouter } from '@/router'
 
@@ -183,6 +183,20 @@ const actions = {
 
     // reset visited views and cached views
     dispatch('tagsView/delAllViews', null, { root: true })
+  },
+  // user update
+  update({ commit }, userInfo) {
+    const { nickname, email } = userInfo
+    return new Promise((resolve, reject) => {
+      updateProfile({ nickname, email }).then(response => {
+        const { data } = response
+        commit('SET_NAME', data.nickname)
+        commit('SET_EMAIL', data.email)
+        resolve(response)
+      }).catch(error => {
+        reject(error)
+      })
+    })
   }
 }
 

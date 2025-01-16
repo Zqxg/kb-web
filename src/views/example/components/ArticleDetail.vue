@@ -2,9 +2,9 @@
   <div class="createPost-container">
     <el-form ref="postForm" :model="postForm" :rules="rules" class="form-container">
       <sticky :z-index="10" :class-name="'sub-navbar '+postForm.status">
-        <CommentDropdown v-model="postForm.comment_disabled" />
+        <CommentDropdown v-model="postForm.commentDisabled" />
         <VisibleRangeDropdown v-model="postForm.visibleRange" />
-        <SourceUrlDropdown v-model="postForm.source_uri" />
+        <SourceUrlDropdown v-model="postForm.sourceUri" />
         <el-button v-loading="loading" style="margin-left: 10px;" type="success" @click="submitForm">
           Publish
         </el-button>
@@ -29,33 +29,23 @@
                 <!-- 作者字段 -->
                 <el-col :span="8">
                   <el-form-item label="作者:" class="postInfo-container-item">
-                    <el-input v-model="postForm.author" :readonly="true" placeholder="Author" />
+                    <el-input v-model="author" :readonly="true" placeholder="Author" />
                   </el-form-item>
                 </el-col>
 
                 <!-- 分组字段 -->
                 <el-col :span="8">
-                  <el-form-item label="分组:" class="postInfo-container-item">
-                    <el-select v-model="postForm.group" placeholder="选择分组">
-                      <el-option
-                        v-for="group in groups"
-                        :key="group.collegeId"
-                        :label="group.collegeName"
-                        :value="group.collegeName"
-                      />
-                    </el-select>
+                  <el-form-item label="分类:" class="postInfo-container-item">
+                    <el-cascader
+                      v-model="selectedCategory"
+                      :options="categories"
+                      placeholder="选择分类"
+                      :props="cascaderProps"
+                      @change="handleCategoryChange"
+                    />
                   </el-form-item>
                 </el-col>
 
-                <!-- 选择上传时间 -->
-                <el-col :span="8">
-                  <el-form-item label="选择上传时间:" class="postInfo-container-item">
-                    <el-date-picker v-model="displayTime" type="datetime" format="yyyy-MM-dd HH:mm:ss" placeholder="选择上传时间" />
-                  </el-form-item>
-                </el-col>
-              </el-row>
-
-              <el-row gutter="{20}">
                 <!-- 重要性字段 -->
                 <el-col :span="6">
                   <el-form-item label="重要性:" class="postInfo-container-item">
@@ -76,7 +66,7 @@
         </el-row>
 
         <el-form-item style="margin-bottom: 40px;" label-width="70px" label="摘要:">
-          <el-input v-model="postForm.content_short" :rows="1" type="textarea" class="article-textarea" autosize placeholder="可以编写摘要" />
+          <el-input v-model="postForm.contentShort" :rows="1" type="textarea" class="article-textarea" autosize placeholder="可以编写摘要" />
           <span v-show="contentShortLength" class="word-counter">{{ contentShortLength }}words</span>
         </el-form-item>
 
@@ -124,26 +114,21 @@ import Tinymce from '@/components/Tinymce'
 import MDinput from '@/components/MDinput'
 import Sticky from '@/components/Sticky' // 粘性header组件
 import { validURL } from '@/utils/validate'
-import { createArticle, fetchArticle } from '@/api/article'
+import { createArticle, fetchArticle, getArticleCategory } from '@/api/article'
 import Warning from './Warning'
 import { CommentDropdown, VisibleRangeDropdown, SourceUrlDropdown } from './Dropdown'
 import MultiFileUpload from '@/components/Upload/MultiFileUpload' // 引入多文件上传组件
-import { getCollegeList, getUserInfo } from '@/api/user'
+import { getUserInfo } from '@/api/user'
 
 const defaultForm = {
-  status: 'draft',
   title: '', // 文章题目
   content: '', // 文章内容
-  author: '',
-  user_id: '',
-  content_short: '', // 文章摘要
-  source_uri: '', // 文章外链
-  group: '', // 分组
-  group_id: '',
-  display_time: undefined, // 前台展示时间
-  id: undefined,
+  authorId: '',
+  contentShort: '', // 文章摘要
+  sourceUri: '', // 文章外链
+  categoryId: '',
   visibleRange: 'public', // 可见范围，默认为 'public'
-  comment_disabled: false,
+  commentDisabled: false,
   importance: 0,
   uploadedFiles: [] // 用于存储已上传文件的列表
 }
@@ -202,15 +187,35 @@ export default {
         content: [{ validator: validateRequire }],
         source_uri: [{ validator: validateSourceUri, trigger: 'blur' }],
         author: [{ required: true, message: 'Author is required', trigger: 'blur' }],
-        group: [{ required: true, message: 'Group is required', trigger: 'blur' }]
+        categoryId: [{ required: true, message: 'Category is required', trigger: 'blur' }]
       },
       tempRoute: {},
-      groups: []
+      categories: [
+        {
+          cid: 2,
+          categoryName: '教学资源',
+          parentId: 0,
+          level: 1,
+          children: [
+            { cid: 29, categoryName: '课程大纲', parentId: 2, level: 2, children: [] },
+            { cid: 30, categoryName: '教案与教材', parentId: 2, level: 2, children: [] },
+            { cid: 31, categoryName: '习题与答案', parentId: 2, level: 2, children: [] },
+            { cid: 32, categoryName: '电子书与学习资料', parentId: 2, level: 2, children: [] }
+          ]
+        }
+      ],
+      selectedCategory: [], // 选中的分类
+      cascaderProps: {
+        value: 'cid',
+        label: 'categoryName',
+        children: 'children'
+      },
+      author: ''
     }
   },
   computed: {
     contentShortLength() {
-      return this.postForm.content_short.length
+      return this.postForm.contentShort.length
     },
     displayTime: {
       // set and get is useful when the data
@@ -244,13 +249,13 @@ export default {
 
         // just for test
         this.postForm.title += `   Article Id:${this.postForm.id}`
-        this.postForm.content_short += `   Article Id:${this.postForm.id}`
+        this.postForm.contentShort += `   Article Id:${this.postForm.id}`
 
         // set tagsview title
         this.setTagsViewTitle()
 
         // set page title
-        this.setPageTitle()
+        // this.setPageTitle()
       }).catch(err => {
         console.log(err)
       })
@@ -271,8 +276,6 @@ export default {
           this.loading = true
           // 使用 Axios 或其他 HTTP 库提交表单数据到后端
           this.submitToBackend(this.postForm)
-          // 设置状态
-          this.postForm.status = 'published'
         } else {
           console.log('发布失败!')
           return false
@@ -281,8 +284,9 @@ export default {
     },
 
     submitToBackend(formData) {
-      // 使用 Axios 提交表单数据
-      createArticle(formData)
+      // 使用 Axios 提交json数据
+      const jsonData = JSON.stringify(formData)
+      createArticle(jsonData)
         .then(response => {
           // 请求成功后的回调
           console.log('文章发布成功', response.data)
@@ -317,20 +321,20 @@ export default {
         if (response.data) {
           const user = response.data
           // 将用户信息填充到表单的author字段
-          this.postForm.author = user.nickname
-          this.postForm.user_id = user.userId
+          this.postForm.authorId = user.userId
+          this.author = user.nickname
         }
       }).catch(error => {
         console.error('获取用户信息失败', error)
       })
     },
-    // 获取学院信息列表
+    // 获取文章分类列表
     fetchCollegeList() {
-      getCollegeList().then(response => {
+      getArticleCategory().then(response => {
         if (response.data) {
           // 将学院信息填充到表单的college字段
-          this.groups = JSON.parse(JSON.stringify(response.data.collegeList)) // 深拷贝
-          console.log('groups:', this.groups)
+          this.categories = JSON.parse(JSON.stringify(response.data.CategoryList)) // 深拷贝
+          console.log('CategoryList:', this.CategoryList)
         }
       }).catch(error => {
         console.error('获取学院信息失败', error)
@@ -345,6 +349,11 @@ export default {
         fileName: file.name,
         fileUrl: file.url // 假设返回的数据包含 fileName 和 fileUrl
       }))
+    },
+    handleCategoryChange(value) {
+      // 这里的 value 是一个数组，包含了从顶级到选中项的所有值
+      // 假设你选择的是某一子分类，直接取最后一个值作为分类ID
+      this.postForm.categoryId = value[value.length - 1]
     }
   }
 }

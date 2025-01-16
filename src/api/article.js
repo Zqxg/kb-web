@@ -28,7 +28,10 @@ export function createArticle(data) {
   return request({
     url: '/v1/article/create',
     method: 'post',
-    data
+    data,
+    headers: {
+      'Content-Type': 'application/json' // 设置请求头为 JSON
+    }
   })
 }
 
@@ -39,3 +42,14 @@ export function updateArticle(data) {
     data
   })
 }
+
+export function getArticleCategory() {
+  return request({
+    url: '/v1/article/getArticleCategory',
+    method: 'get',
+    headers: {
+      'Content-Type': 'application/json' // 设置请求头为 JSON
+    }
+  })
+}
+
