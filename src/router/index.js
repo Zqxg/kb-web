@@ -76,29 +76,29 @@ export const constantRoutes = [
     component: () => import('@/views/error-page/401'),
     hidden: true
   },
+  // {
+  //   path: '/',
+  //   component: Layout,
+  //   redirect: '/dashboard',
+  //   children: [
+  //     {
+  //       path: 'dashboard',
+  //       component: () => import('@/views/dashboard/index'),
+  //       name: 'Dashboard',
+  //       meta: { title: 'Dashboard', icon: 'dashboard', affix: true }
+  //     }
+  //   ]
+  // },
   {
     path: '/',
     component: Layout,
     redirect: '/dashboard',
     children: [
       {
-        path: 'dashboard',
-        component: () => import('@/views/dashboard/index'),
-        name: 'Dashboard',
-        meta: { title: 'Dashboard', icon: 'dashboard', affix: true }
-      }
-    ]
-  },
-  {
-    path: '/',
-    component: Layout,
-    redirect: '/dashboard1',
-    children: [
-      {
         path: 'dashboard1',
         component: () => import('@/views/dashboard1/index'),
         name: '首页',
-        meta: { title: 'Dashboard1', icon: 'dashboard', affix: true }
+        meta: { title: '首页', icon: 'dashboard', affix: true }
       }
     ]
   },
@@ -190,18 +190,18 @@ export const asyncRoutes = [
     ]
   },
 
-  // {
-  //   path: '/icon',
-  //   component: Layout,
-  //   children: [
-  //     {
-  //       path: 'index',
-  //       component: () => import('@/views/icons/index'),
-  //       name: 'Icons',
-  //       meta: { title: 'Icons', icon: 'icon', noCache: true }
-  //     }
-  //   ]
-  // },
+  {
+    path: '/icon',
+    component: Layout,
+    children: [
+      {
+        path: 'index',
+        component: () => import('@/views/icons/index'),
+        name: 'Icons',
+        meta: { title: 'Icons', icon: 'icon', noCache: true }
+      }
+    ]
+  },
 
   /** when your routing map is too long, you can split it into small modules **/
   // componentsRouter,
@@ -240,7 +240,24 @@ export const asyncRoutes = [
       }
     ]
   },
-
+  {
+    path: '/common-doc-list',
+    name: 'CommonDocList',
+    component: Layout,
+    redirect: '/common-doc-list/index',
+    meta: {
+      title: '快速连接',
+      icon: 'list'
+    },
+    children: [
+      {
+        path: 'index',
+        component: () => import('@/views/common-doc-list/index'),
+        name: '目录浏览',
+        meta: { title: '目录浏览', icon: 'list' }
+      }
+    ]
+  },
   // {
   //   path: '/tab',
   //   component: Layout,

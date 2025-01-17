@@ -1,6 +1,10 @@
 <template>
   <div class="category-list">
-    <h3>目录</h3>
+    <div class="header">
+      <h3>目录</h3>
+      <p class="more" @click="goToCommonDocList">更多 ></p>
+    </div>
+    <!-- 更多文字 -->
     <div class="title-divider" />
     <el-row :gutter="20">
       <!-- 渲染最多8个一级目录，直接展示 -->
@@ -46,6 +50,9 @@ export default {
           ...category,
           children: [] // 确保不处理子目录
         }))
+    },
+    goToCommonDocList() {
+      this.$router.push('/common-doc-list')// 跳转到 common-doc-list 页面
     }
   }
 }
@@ -55,7 +62,24 @@ export default {
 .category-list {
   margin-bottom: 10px;
 }
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
 
+.header h3 {
+  margin-left: 20px;  /* 增加标题右侧的间距 */
+}
+
+.more {
+  color: #707377;
+  cursor: pointer;
+  margin: 0;
+  font-size: 14px;
+  margin-right: 10px; /* 增加“更多”左侧的间距 */
+}
 /* 目录项样式 */
 .category-item {
   width: 150px; /* 设置目录项宽度 */
