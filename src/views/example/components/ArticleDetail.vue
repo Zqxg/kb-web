@@ -337,7 +337,7 @@ export default {
           console.log('CategoryList:', this.CategoryList)
         }
       }).catch(error => {
-        console.error('获取学院信息失败', error)
+        console.error('获取文章分类失败', error)
       })
     },
     handleAdd() {

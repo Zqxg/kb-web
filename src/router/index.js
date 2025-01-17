@@ -89,6 +89,19 @@ export const constantRoutes = [
       }
     ]
   },
+  {
+    path: '/',
+    component: Layout,
+    redirect: '/dashboard1',
+    children: [
+      {
+        path: 'dashboard1',
+        component: () => import('@/views/dashboard1/index'),
+        name: '首页',
+        meta: { title: 'Dashboard1', icon: 'dashboard', affix: true }
+      }
+    ]
+  },
   // {
   //   path: '/documentation',
   //   component: Layout,
@@ -202,7 +215,7 @@ export const asyncRoutes = [
     redirect: '/example/list',
     name: 'Knowledge',
     meta: {
-      title: '个人知识库',
+      title: '创建知识',
       icon: 'el-icon-s-help'
     },
     children: [
@@ -210,7 +223,7 @@ export const asyncRoutes = [
         path: 'create',
         component: () => import('@/views/example/create'),
         name: 'CreateArticle',
-        meta: { title: 'Create Article', icon: 'edit' }
+        meta: { title: '新建', icon: 'edit' }
       },
       {
         path: 'edit/:id(\\d+)',
@@ -223,7 +236,7 @@ export const asyncRoutes = [
         path: 'list',
         component: () => import('@/views/example/list'),
         name: 'ArticleList',
-        meta: { title: 'Article List', icon: 'list' }
+        meta: { title: '编辑列表', icon: 'list' }
       }
     ]
   },
