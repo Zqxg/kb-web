@@ -1,7 +1,7 @@
 <template>
   <div class="common-doc-list">
     <div class="header">
-      <h1 class="title">知识目录</h1>
+      <p class="title"><svg-icon icon-class="list" /> 知识目录</p>
       <SortSelect @sort-change="handleSortChange" />
     </div>
     <div class="content">
@@ -25,15 +25,8 @@ export default {
   data() {
     return {
       categories: [
-        { name: '编程', id: 1 },
-        { name: '数据科学', id: 2 },
-        { name: '计算机网络', id: 3 }
       ],
       articles: [
-        { title: 'Vue基础教程', categoryId: 1, date: '2025-01-01' },
-        { title: 'Python数据分析', categoryId: 2, date: '2025-01-03' },
-        { title: '计算机网络原理', categoryId: 3, date: '2025-01-05' }
-        // 更多文章
       ],
       selectedCategoryId: null,
       sortOrder: 'asc' // 默认升序
@@ -70,13 +63,17 @@ export default {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  background-color: #f5f5f5;
+  padding-left: 50px;
+  padding-right: 50px;
 }
 .header {
   display: flex;
   justify-content: space-between;
   padding: 20px;
-  background-color: #fff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  color: #707377;
+  margin-bottom: -10px;
+
 }
 .title {
   margin: 0;
@@ -84,6 +81,6 @@ export default {
 .content {
   display: flex;
   flex: 1;
-  padding: 20px;
+  padding: 10px;
 }
 </style>

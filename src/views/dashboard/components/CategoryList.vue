@@ -4,16 +4,12 @@
       <h3>目录</h3>
       <p class="more" @click="goToCommonDocList">更多 ></p>
     </div>
-    <!-- 更多文字 -->
     <div class="title-divider" />
     <el-row :gutter="20">
-      <!-- 渲染最多8个一级目录，直接展示 -->
       <el-col v-for="category in categories.slice(0, 8)" :key="category.cid" :span="24">
-        <!-- 直接展示一级目录 -->
-        <div class="category-item" @click="$emit('select', category)">
+        <div class="category-item" @click="goToCategoryArticles(category.cid)">
           <p class="category-text">{{ category.categoryName }}</p>
         </div>
-        <!-- 使用透明度低的虚线作为分隔线 -->
         <div class="divider" />
       </el-col>
     </el-row>
@@ -26,11 +22,11 @@ import { getArticleCategory } from '@/api/article'
 export default {
   data() {
     return {
-      categories: [] // 初始化分类数据
+      categories: [] // 存储分类列表
     }
   },
   mounted() {
-    this.fetchCollegeList() // 组件挂载时调用获取分类方法
+    this.fetchCollegeList()
   },
   methods: {
     fetchCollegeList() {
@@ -42,17 +38,18 @@ export default {
         console.error('获取文章分类失败', error)
       })
     },
-
     getTopLevelCategories(categories) {
-      return categories
-        .filter(category => category.level === 1)
-        .map(category => ({
-          ...category,
-          children: [] // 确保不处理子目录
-        }))
+      return categories.filter(category => category.level === 1).map(category => ({
+        ...category,
+        children: [] // 确保不处理子目录
+      }))
+    },
+    goToCategoryArticles(cid) {
+      // 跳转到文章页面并传递 categoryId
+      this.$router.push({ path: '/common-doc-list', query: { categoryId: cid }})
     },
     goToCommonDocList() {
-      this.$router.push('/common-doc-list')// 跳转到 common-doc-list 页面
+      this.$router.push('/common-doc-list') // 跳转到文章页面
     }
   }
 }

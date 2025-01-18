@@ -1,44 +1,90 @@
-<!--<template>-->
-<!--  <div class="sidebar">-->
-<!--    <ul>-->
-<!--      <li v-for="category in categories" :key="category.id" @click="selectCategory(category.id)">-->
-<!--        {{ category.name }}-->
-<!--      </li>-->
-<!--    </ul>-->
-<!--  </div>-->
-<!--</template>-->
+<template>
+  <div class="sidebar">
+    <el-tree
+      ref="tree"
+      :data="categories"
+      :props="treeProps"
+      :highlight-current="true"
+      node-key="cid"
+      style="max-height: 85%; overflow-y: auto;"
+      @node-click="handleNodeClick"
+    />
+  </div>
+</template>
 
-<!--<script>-->
-<!--export default {-->
-<!--  props: {-->
-<!--    categories: Array-->
-<!--  },-->
-<!--  methods: {-->
-<!--    selectCategory(categoryId) {-->
-<!--      this.$emit('category-select', categoryId)-->
-<!--    }-->
-<!--  }-->
-<!--}-->
-<!--</script>-->
+<script>
+import { getArticleCategory } from '@/api/article'
 
-<!--<style scoped>-->
-<!--.sidebar {-->
-<!--  width: 200px;-->
-<!--  padding: 20px;-->
-<!--  background-color: #f1f1f1;-->
-<!--}-->
-<!--.sidebar ul {-->
-<!--  list-style-type: none;-->
-<!--  padding: 0;-->
-<!--}-->
-<!--.sidebar li {-->
-<!--  cursor: pointer;-->
-<!--  padding: 10px;-->
-<!--  margin: 5px 0;-->
-<!--  background-color: #e1e1e1;-->
-<!--  border-radius: 5px;-->
-<!--}-->
-<!--.sidebar li:hover {-->
-<!--  background-color: #d1d1d1;-->
-<!--}-->
-<!--</style>-->
+export default {
+  data() {
+    return {
+      categories: [], // 存储分类列表
+      treeProps: {
+        children: 'children', // 子分类字段
+        label: 'categoryName' // 分类名称字段
+      },
+      selectedCategoryId: null // 存储选中的目录ID
+    }
+  },
+  mounted() {
+    // 页面加载时获取查询参数中的 categoryId 并选中对应目录
+    this.fetchCategoryList()
+  },
+  methods: {
+    fetchCategoryList() {
+      getArticleCategory().then(response => {
+        if (response.data) {
+          this.categories = response.data.CategoryList || []
+          this.selectCategoryFromQuery()
+        }
+      }).catch(error => {
+        console.error('获取文章分类失败', error)
+      })
+    },
+    handleNodeClick(nodeData) {
+      console.log('Node clicked:', nodeData) // 打印点击的节点
+    },
+    selectCategoryFromQuery() {
+      // 获取 URL 查询参数中的 categoryId
+      const categoryId = this.$route.query.categoryId
+      if (categoryId) {
+        this.selectedCategoryId = categoryId
+        this.$nextTick(() => {
+          this.selectNodeById(categoryId)
+        })
+      }
+    },
+    selectNodeById(categoryId) {
+      // 递归查找目标节点
+      const node = this.findNodeById(this.categories, categoryId)
+      if (node) {
+        // 使用 el-tree 提供的 setCurrentKey 方法选中节点
+        this.$refs.tree.setCurrentKey(node.cid)
+      }
+    },
+    findNodeById(categories, categoryId) {
+      for (const category of categories) {
+        if (category.cid === categoryId) {
+          return category
+        }
+        // 如果有子分类，递归查找
+        if (category.children && category.children.length > 0) {
+          const found = this.findNodeById(category.children, categoryId)
+          if (found) return found
+        }
+      }
+      return null
+    }
+  }
+}
+</script>
+
+<style scoped>
+.sidebar {
+  width: 250px;
+  padding: 10px;
+  margin-right: 20px;
+  background-color: white;
+}
+
+</style>
