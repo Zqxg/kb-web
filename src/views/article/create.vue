@@ -3,11 +3,12 @@
 </template>
 
 <script>
-import ArticleDetail from './components/ArticleDetail'
+import CreateArticle from './components/CreateArticle'
 
 export default {
   name: 'CreateArticle',
-  components: { ArticleDetail }
+  // eslint-disable-next-line vue/no-unused-components
+  components: { CreateArticle }
 }
 </script>
 

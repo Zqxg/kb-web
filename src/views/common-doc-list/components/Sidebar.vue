@@ -6,7 +6,7 @@
       :props="treeProps"
       :highlight-current="true"
       node-key="cid"
-      style="max-height: 85%; overflow-y: auto;"
+      style="max-height: 95%; overflow-y: auto;"
       @node-click="handleNodeClick"
     />
   </div>
@@ -81,10 +81,11 @@ export default {
 
 <style scoped>
 .sidebar {
-  width: 250px;
   padding: 10px;
   margin-right: 20px;
   background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 </style>
