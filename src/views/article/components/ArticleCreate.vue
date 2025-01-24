@@ -159,6 +159,12 @@ export default {
           type: 'error'
         })
         callback(new Error(rule.field + '为必传项'))
+      } else if (value.length > 20) {
+        this.$message({
+          message: rule.field + '标题不能超过20个字',
+          type: 'error'
+        })
+        callback(new Error(rule.field + '不能超过20个字'))
       } else {
         callback()
       }
@@ -197,10 +203,6 @@ export default {
           parentId: 0,
           level: 1,
           children: [
-            { cid: 29, categoryName: '课程大纲', parentId: 2, level: 2, children: [] },
-            { cid: 30, categoryName: '教案与教材', parentId: 2, level: 2, children: [] },
-            { cid: 31, categoryName: '习题与答案', parentId: 2, level: 2, children: [] },
-            { cid: 32, categoryName: '电子书与学习资料', parentId: 2, level: 2, children: [] }
           ]
         }
       ],

@@ -210,9 +210,9 @@ export const asyncRoutes = [
   // tableRouter,
 
   {
-    path: '/example',
+    path: '/article',
     component: Layout,
-    redirect: '/example/list',
+    redirect: '/article/create',
     name: 'Knowledge',
     meta: {
       title: '创建知识',

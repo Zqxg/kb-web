@@ -12,6 +12,12 @@
       <div class="book-category">
         <svg-icon icon-class="list" />  {{ article.category }}
       </div>
+      <!-- 星级评分部分 -->
+      <div class="book-importance">
+        <span v-for="star in article.importance" :key="star" class="el-icon-star-on" />
+        <span v-for="emptyStar in (3 - article.importance)" :key="emptyStar" class="el-icon-star-off" />
+      </div>
+      <!-- 时间和摘要部分 -->
       <div class="book-time">
         <i class="el-icon-date" />
         <span>创建时间: {{ formatDate(article.createdAt) }}</span> |
@@ -158,4 +164,12 @@ export default {
     min-width: 10px; /* 更小的最小宽度 */
   }
 }
+.book-importance {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 18px;
+  color: #ffd700; /* 星星颜色 */
+}
+
 </style>

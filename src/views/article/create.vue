@@ -1,14 +1,14 @@
 <template>
-  <article-detail :is-edit="false" />
+  <article-create :is-edit="false" />
 </template>
 
 <script>
-import CreateArticle from './components/CreateArticle'
+import ArticleCreate from './components/ArticleCreate.vue'
 
 export default {
   name: 'CreateArticle',
   // eslint-disable-next-line vue/no-unused-components
-  components: { CreateArticle }
+  components: { ArticleCreate }
 }
 </script>
 
