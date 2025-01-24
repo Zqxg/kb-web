@@ -51,6 +51,10 @@ export default {
     categoryId: {
       immediate: true,
       handler(newVal) {
+        if (newVal === null) {
+          // 如果 categoryId 为 null，不调用 fetchArticles
+          return
+        }
         this.fetchArticles(newVal, this.pageNum, this.pageSize, this.sortOrder)
       }
     },

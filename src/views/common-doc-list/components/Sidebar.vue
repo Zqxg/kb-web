@@ -32,14 +32,19 @@ export default {
   },
   methods: {
     fetchCategoryList() {
-      getArticleCategory().then(response => {
-        if (response.data) {
-          this.categories = response.data.CategoryList || []
-          this.selectCategoryFromQuery()
-        }
-      }).catch(error => {
-        console.error('获取文章分类失败', error)
-      })
+      getArticleCategory()
+        .then(response => {
+          if (response.data) {
+            this.categories = response.data.CategoryList || []
+            // 确保分类数据加载完成后再选中节点
+            this.$nextTick(() => {
+              this.selectCategoryFromQuery()
+            })
+          }
+        })
+        .catch(error => {
+          console.error('获取文章分类失败', error)
+        })
     },
     handleNodeClick(nodeData) {
       console.log('Node clicked:', nodeData) // 打印点击的节点
@@ -47,21 +52,20 @@ export default {
       this.$emit('category-select', nodeData.cid)
     },
     selectCategoryFromQuery() {
-      // 获取 URL 查询参数中的 categoryId
       const categoryId = this.$route.query.categoryId
       if (categoryId) {
-        this.selectedCategoryId = categoryId
+        this.selectedCategoryId = categoryId // 同步到子组件
         this.$nextTick(() => {
           this.selectNodeById(categoryId)
         })
       }
     },
     selectNodeById(categoryId) {
-      // 递归查找目标节点
       const node = this.findNodeById(this.categories, categoryId)
       if (node) {
-        // 使用 el-tree 提供的 setCurrentKey 方法选中节点
         this.$refs.tree.setCurrentKey(node.cid)
+        this.selectedCategoryId = node.cid // 同步更新子组件的分类 ID
+        this.$emit('category-select', node.cid) // 通知父组件
       }
     },
     findNodeById(categories, categoryId) {
