@@ -37,7 +37,7 @@ export function createArticle(data) {
 
 export function updateArticle(data) {
   return request({
-    url: '/vue-element-admin/article/update',
+    url: '/v1/article/updateArticle',
     method: 'post',
     data
   })
@@ -50,6 +50,17 @@ export function getArticleCategory() {
     headers: {
       'Content-Type': 'application/json' // 设置请求头为 JSON
     }
+  })
+}
+
+export function getArticleListByCategory(params) {
+  return request({
+    url: '/v1/article/getArticleListByCategory',
+    method: 'get',
+    headers: {
+      'Content-Type': 'application/json' // 设置请求头为 JSON
+    },
+    params
   })
 }
 

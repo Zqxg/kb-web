@@ -43,6 +43,8 @@ export default {
     },
     handleNodeClick(nodeData) {
       console.log('Node clicked:', nodeData) // 打印点击的节点
+      // 点击分类节点，通知父组件
+      this.$emit('category-select', nodeData.cid)
     },
     selectCategoryFromQuery() {
       // 获取 URL 查询参数中的 categoryId

@@ -1,46 +1,161 @@
-<!--<template>-->
-<!--  <div className="article-card">-->
-<!--    <h3>{{ article.title }}</h3>-->
-<!--    <p>{{ article.content_short }}</p>-->
-<!--    <span>{{ article.created_at }}</span>-->
-<!--  </div>-->
-<!--</template>-->
+<template>
+  <div class="article-card">
+    <!-- 封面区 -->
+    <div class="book-cover" :style="{ background: randomGradient }">
+      <h3 class="book-title">{{ article.title }}</h3>
+      <p class="book-author">
+        <i class="el-icon-s-check" /> {{ article.author }}
+      </p>
+    </div>
+    <!-- 内容区 -->
+    <div class="book-details">
+      <div class="book-category">
+        <svg-icon icon-class="list" />  {{ article.category }}
+      </div>
+      <div class="book-time">
+        <i class="el-icon-date" />
+        <span>创建时间: {{ formatDate(article.createdAt) }}</span> |
+        <span>最近更新: {{ formatDate(article.updateAt) }}</span>
+      </div>
+      <div class="book-summary">
+        <p>摘要: {{ truncatedContentShort }}</p>
+      </div>
+      <div class="book-content">
+        <p>内容: {{ truncatedContent }}</p>
+      </div>
+    </div>
+  </div>
+</template>
 
-<!--<script>-->
-<!--export default {-->
-<!--  props: {-->
-<!--    article: Object-->
-<!--  }-->
-<!--}-->
-<!--</script>-->
+<script>
+export default {
+  props: {
+    article: {
+      type: Object,
+      required: true
+    }
+  },
+  data() {
+    return {
+      randomGradient: this.generateRandomGradient()
+    }
+  },
+  computed: {
+    // 截取摘要，限制为30个字符，超过则加省略号
+    truncatedContent() {
+      return this.article.content.length > 30
+        ? this.article.content.slice(0, 30) + '...'
+        : this.article.content
+    },
+    truncatedContentShort() {
+      return this.article.contentShort.length > 30
+        ? this.article.contentShort.slice(0, 30) + '...'
+        : this.article.contentShort
+    }
+  },
+  methods: {
+    // 格式化日期
+    formatDate(dateString) {
+      const date = new Date(dateString)
+      return date.toLocaleDateString() // 可以根据需要调整日期格式
+    },
+    generateRandomGradient() {
+      const colors = [
+        '#ff9a9e',
+        '#fad0c4',
+        '#a1c4fd',
+        '#c2e9fb',
+        '#fbc2eb',
+        '#a6c1ee',
+        '#fddb92',
+        '#d4fc79',
+        '#96e6a1',
+        '#84fab0',
+        '#8fd3f4',
+        '#a8edea'
+      ]
+      const color1 = colors[Math.floor(Math.random() * colors.length)]
+      const color2 = colors[Math.floor(Math.random() * colors.length)]
+      return `linear-gradient(135deg, ${color1} 0%, ${color2} 100%)`
+    }
+  }
+}
+</script>
 
-<!--<style scoped>-->
-<!--.article-card {-->
-<!--  padding: 15px;-->
-<!--  background-color: #fff;-->
-<!--  border-radius: 8px;-->
-<!--  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);-->
-<!--  transition: all 0.3s ease;-->
-<!--}-->
+<style scoped>
+.article-card {
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #fdfaf2;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: auto; /* 限制最大宽度 */
+  max-width: 100%; /* 防止宽度超出父容器 */
+  margin: 0 auto;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
 
-<!--.article-card h3 {-->
-<!--  font-size: 18px;-->
-<!--  font-weight: bold;-->
-<!--  margin-bottom: 10px;-->
-<!--}-->
+.article-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
 
-<!--.article-card p {-->
-<!--  color: #555;-->
-<!--  margin-bottom: 10px;-->
-<!--}-->
+.book-cover {
+  padding: 16px;
+  color: #fff;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
 
-<!--.article-card span {-->
-<!--  font-size: 12px;-->
-<!--  color: #888;-->
-<!--}-->
+.book-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
 
-<!--.article-card:hover {-->
-<!--  background-color: #f1f1f1;-->
-<!--  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);-->
-<!--}-->
-<!--</style>-->
+.book-author {
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.book-details {
+  padding: 5%;
+  background-color: #fdfaf2;
+}
+
+.book-category,
+.book-time,
+.book-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #a8a8a7;
+  margin-bottom: 5px;
+}
+.book-content{
+  font-size: 16px;
+  color: #888680;
+}
+@media (max-width: 768px) { /* 针对平板和手机 */
+  .article-card {
+    width: calc(100% - 20px); /* 让卡片宽度适配小屏幕，减去边距 */
+    max-width: 400px; /* 限制最大宽度 */
+    min-width: 280px; /* 设置最小宽度，确保内容不会过小 */
+    margin: 10px auto;
+  }
+}
+
+@media (max-width: 380px) { /* 针对更小的手机 */
+  .article-card {
+    margin-left: -10px; /* 减少左边距 */
+    min-width: 10px; /* 更小的最小宽度 */
+  }
+}
+</style>
