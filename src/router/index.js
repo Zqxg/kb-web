@@ -229,7 +229,7 @@ export const asyncRoutes = [
         path: 'edit/:id(\\d+)',
         component: () => import('@/views/article/edit'),
         name: 'EditArticle',
-        meta: { title: 'Edit Article', noCache: true, activeMenu: '/example/list' },
+        meta: { title: '编辑', noCache: true, activeMenu: '/article/list' },
         hidden: true
       },
       {
@@ -237,6 +237,13 @@ export const asyncRoutes = [
         component: () => import('@/views/article/list'),
         name: 'ArticleList',
         meta: { title: '编辑列表', icon: 'list' }
+      },
+      {
+        path: 'detail/:id(\\d+)',
+        component: () => import('@/views/article/detail'),
+        name: 'Detail',
+        meta: { title: '详细', noCache: true, activeMenu: '/article/list' }
+        // hidden: true
       }
     ]
   },

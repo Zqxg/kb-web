@@ -29,6 +29,23 @@
             />
           </el-col>
 
+          <!-- 文章状态搜索 -->
+          <el-col :span="3">
+            <el-select
+              v-model="searchQuery.status"
+              placeholder="选择状态"
+              clearable
+              style="width: 100%;"
+            >
+              <el-option label="草稿" value="0" />
+              <el-option label="已发布" value="1" />
+              <el-option label="已删除" value="2" />
+              <el-option label="待审核" value="3" />
+              <el-option label="已驳回" value="4" />
+              <el-option label="已计划" value="5" />
+            </el-select>
+          </el-col>
+
           <!-- 发布时间开始 -->
           <el-col :span="4">
             <el-date-picker
@@ -85,7 +102,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="createdAt" label="发布日期" width="180" />
-        <el-table-column prop="updateAt" label="最近更新" width="120" />
+        <el-table-column prop="updateAt" label="最近更新" width="180" />
         <el-table-column label="状态" width="120">
           <template slot-scope="scope">
             <el-tag :type="getStatusTag(scope.row.status)" disable-transitions>
@@ -93,13 +110,30 @@
             </el-tag>
           </template>
         </el-table-column>
+
         <!-- 固定在右侧的操作列 -->
-        <el-table-column label="操作" width="180" fixed="right">
+        <el-table-column label="操作" width="200" fixed="right">
           <template v-slot="scope">
-            <el-button size="mini" type="primary" icon="el-icon-edit" @click="editArticle(scope.row)">编辑</el-button>
-            <el-button size="mini" type="danger" icon="el-icon-delete" @click="showDeleteDialog(scope.row)">删除</el-button>
+            <!-- 编辑按钮 -->
+            <span v-if="scope.row.status !== 2" class="operation-item" @click="editArticle(scope.row)">
+              <i class="el-icon-edit" />
+              <span class="operation-text">编辑</span>
+            </span>
+
+            <!-- 查看详细按钮，仅当文章状态为已发布时显示 -->
+            <span v-if="scope.row.status === 1" class="operation-item" @click="viewArticle(scope.row)">
+              <i class="el-icon-search" />
+              <span class="operation-text">查看详细</span>
+            </span>
+
+            <!-- 删除按钮 -->
+            <span v-if="scope.row.status !== 2" class="operation-item" @click="showDeleteDialog(scope.row)">
+              <i class="el-icon-delete" />
+              <span class="operation-text">删除</span>
+            </span>
           </template>
         </el-table-column>
+
       </el-table>
       <!-- 删除确认弹框 -->
       <el-dialog
@@ -125,35 +159,12 @@
         background
         @current-change="handlePageChange"
       />
-
-      <!-- 编辑对话框 -->
-      <el-dialog title="编辑文章" :visible.sync="dialogVisible">
-        <el-form ref="articleForm" :model="currentArticle">
-          <el-form-item label="文章标题" :label-width="formLabelWidth">
-            <el-input v-model="currentArticle.title" />
-          </el-form-item>
-          <el-form-item label="文章内容" :label-width="formLabelWidth">
-            <el-input v-model="currentArticle.content" type="textarea" />
-          </el-form-item>
-          <el-form-item label="文章状态" :label-width="formLabelWidth">
-            <el-select v-model="currentArticle.status">
-              <el-option label="草稿" value="0" />
-              <el-option label="已发布" value="1" />
-              <el-option label="已删除" value="2" />
-            </el-select>
-          </el-form-item>
-        </el-form>
-        <div slot="footer" class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="saveArticle">保存</el-button>
-        </div>
-      </el-dialog>
     </el-card>
   </div>
 </template>
 
 <script>
-import { getArticleCategory } from '@/api/article'
+import { getArticleCategory, getUserArticleList } from '@/api/article'
 import { Message } from 'element-ui'
 
 export default {
@@ -161,7 +172,9 @@ export default {
     return {
       searchQuery: {
         createdAtEnd: null,
-        createdAtStart: null
+        createdAtStart: null,
+        status: null,
+        title: ''
       },
       currentPage: 1,
       pageSize: 10,
@@ -189,22 +202,34 @@ export default {
   },
   methods: {
     fetchArticles() {
-      const response = {
-        data: {
-          ArticleDataList: [
-            { articleId: 1, title: '修改的标题', contentShort: '测试的摘要', category: '校园生活', importance: 1, createdAt: '2025-01-22 11:22:33', updateAt: '2025-01-23', status: 1 },
-            { articleId: 11, title: '标题11', contentShort: '测试的摘要', category: '校园生活', importance: 2, createdAt: '2025-01-23', updateAt: '2025-01-23', status: 1 }
-          ],
-          totalCount: 12,
-          pageIndex: 1,
-          pageSize: 10
-        }
+      // 构建请求参数
+      const searchParams = {
+        CreatedEnd: this.searchQuery.createdAtEnd ? this.formatDate(this.searchQuery.createdAtEnd) : '',
+        categoryId: this.selectedCategoryId || 0,
+        createdAt: this.searchQuery.createdAtStart ? this.formatDate(this.searchQuery.createdAtStart) : '',
+        pageIndex: this.currentPage,
+        pageSize: this.pageSize,
+        title: this.searchQuery.title || '',
+        status: Number(this.searchQuery.status) || -1 // 默认为-1，表示所有状态
       }
 
-      this.articles = response.data.ArticleDataList
-      this.totalArticles = response.data.totalCount
-      this.updateFilteredArticles()
+      // 调用后端接口获取数据
+      getUserArticleList(searchParams).then(response => {
+        if (response.data) {
+          // 深拷贝文章数据，确保不会修改原始数据
+          this.articles = JSON.parse(JSON.stringify(response.data.ArticleDataList))
+          this.totalArticles = response.data.totalCount
+          this.updateFilteredArticles()
+          Message.success('获取文章列表成功')
+        } else {
+          Message.error('未找到匹配的文章')
+        }
+      }).catch(error => {
+        console.error('获取文章列表失败:', error)
+        Message.error('获取文章列表失败，请稍后重试')
+      })
     },
+
     handleCategoryChange(value) {
       // 这里的 value 是一个数组，包含了从顶级到选中项的所有值
       this.selectedCategoryId = value[value.length - 1]
@@ -217,15 +242,10 @@ export default {
       this.updateFilteredArticles()
     },
     editArticle(article) {
-      this.currentArticle = { ...article }
-      this.dialogVisible = true
+      this.$router.push({ name: 'EditArticle', params: { id: article.articleId }})
     },
-    saveArticle() {
-      const index = this.articles.findIndex((article) => article.articleId === this.currentArticle.articleId)
-      if (index !== -1) {
-        this.$set(this.articles, index, { ...this.currentArticle })
-      }
-      this.dialogVisible = false
+    viewArticle(article) {
+      this.$router.push({ name: 'Detail', params: { id: article.articleId }})
     },
     deleteArticle(article) {
       const index = this.articles.findIndex((a) => a.articleId === article.articleId)
@@ -247,7 +267,7 @@ export default {
     },
     getStatusText(status) {
       switch (status) {
-        case 0: return '未知'
+        case 0: return '草稿'
         case 1: return '已发布'
         case 2: return '已删除'
         case 3: return '待审核'
@@ -271,18 +291,20 @@ export default {
     handleSearch() {
       // 实现搜索逻辑
       console.log('搜索条件:', this.searchQuery)
-      Message.success('获取文章列表成功')
-      // 根据 searchQuery 中的条件执行过滤或请求
+      this.fetchArticles()
     },
     clearSearch() {
       // 清空搜索条件
       this.searchQuery = {
         title: '',
+        status: null,
         createdAtStart: null,
         createdAtEnd: null
       }
       this.selectedCategory = []
-      // this.handleSearch() // 执行一次搜索，确保清空后能显示所有数据
+      this.selectedCategoryId = null
+
+      this.handleSearch() // 执行一次搜索，确保清空后能显示所有数据
     },
     showDeleteDialog(article) {
       // 设置弹框内容并显示弹框
@@ -406,6 +428,32 @@ export default {
 }
 .search-button {
   margin-top: 10px;
+}
+
+.operation-item {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  margin-right: 10px; /* 为每个操作按钮添加间距 */
+}
+
+.operation-item i {
+  font-size: 18px;
+  margin-right: 5px; /* 图标与文字之间的间距 */
+  color: #409EFF; /* 默认图标颜色，可以根据需求调整 */
+}
+
+.operation-item:hover i {
+  color: #66b1ff; /* 鼠标悬停时改变图标颜色 */
+}
+
+.operation-text {
+  font-size: 14px;
+  color: #409EFF;
+}
+
+.operation-item:hover .operation-text {
+  color: #66b1ff; /* 鼠标悬停时改变文字颜色 */
 }
 </style>
 

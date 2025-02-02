@@ -5,11 +5,12 @@
         <CommentDropdown v-model="postForm.commentDisabled" />
         <VisibleRangeDropdown v-model="postForm.visibleRange" />
         <SourceUrlDropdown v-model="postForm.sourceUri" />
+
         <el-button v-loading="loading" style="margin-left: 10px;" type="success" @click="submitForm">
-          Publish
+          发布
         </el-button>
-        <el-button v-loading="loading" type="warning" @click="draftForm">
-          Draft
+        <el-button v-if="!isEdit" v-loading="loading" type="warning" @click="draftForm">
+          草稿
         </el-button>
       </sticky>
 
@@ -25,7 +26,7 @@
             </el-form-item>
 
             <div class="postInfo-container">
-              <el-row>  <!-- 增加间距 -->
+              <el-row>
                 <!-- 作者字段 -->
                 <el-col :span="8">
                   <el-form-item label="作者:" class="postInfo-container-item">
@@ -114,7 +115,7 @@ import Tinymce from '@/components/Tinymce'
 import MDinput from '@/components/MDinput'
 import Sticky from '@/components/Sticky' // 粘性header组件
 import { validURL } from '@/utils/validate'
-import { createArticle, fetchArticle, getArticleCategory } from '@/api/article'
+import { createArticle, getArticle, getArticleCategory, updateArticle } from '@/api/article'
 import Warning from './Warning'
 import { CommentDropdown, VisibleRangeDropdown, SourceUrlDropdown } from './Dropdown'
 import MultiFileUpload from '@/components/Upload/MultiFileUpload' // 引入多文件上传组件
@@ -169,6 +170,17 @@ export default {
         callback()
       }
     }
+    const validateContent = (rule, value, callback) => {
+      if (value === '') {
+        this.$message({
+          message: rule.field + '为必传项',
+          type: 'error'
+        })
+        callback(new Error(rule.field + '为必传项'))
+      } else {
+        callback()
+      }
+    }
     const validateSourceUri = (rule, value, callback) => {
       if (value) {
         if (validURL(value)) {
@@ -185,28 +197,20 @@ export default {
       }
     }
     return {
+      id: 0,
       postForm: Object.assign({}, defaultForm),
       loading: false,
       userListOptions: [],
       rules: {
         title: [{ validator: validateRequire }],
-        content: [{ validator: validateRequire }],
+        content: [{ validator: validateContent }],
         source_uri: [{ validator: validateSourceUri, trigger: 'blur' }],
         author: [{ required: true, message: 'Author is required', trigger: 'blur' }],
         categoryId: [{ required: true, message: 'Category is required', trigger: 'blur' }]
       },
       tempRoute: {},
-      categories: [
-        {
-          cid: 2,
-          categoryName: '教学资源',
-          parentId: 0,
-          level: 1,
-          children: [
-          ]
-        }
-      ],
-      selectedCategory: [], // 选中的分类
+      categories: [],
+      selectedCategory: [],
       cascaderProps: {
         value: 'cid',
         label: 'categoryName',
@@ -218,66 +222,59 @@ export default {
   computed: {
     contentShortLength() {
       return this.postForm.contentShort.length
-    },
-    displayTime: {
-      // set and get is useful when the data
-      // returned by the back end api is different from the front end
-      // back end return => "2013-06-25 06:59:25"
-      // front end need timestamp => 1372114765000
-      get() {
-        return (+new Date(this.postForm.display_time))
-      },
-      set(val) {
-        this.postForm.display_time = new Date(val)
-      }
     }
   },
   created() {
     if (this.isEdit) {
       const id = this.$route.params && this.$route.params.id
+      this.id = id
       this.fetchData(id)
     }
     this.fetchUserInfo()
     this.fetchCategoryList()
-    // Why need to make a copy of this.$route here?
-    // Because if you enter this page and quickly switch tag, may be in the execution of the setTagsViewTitle function, this.$route is no longer pointing to the current page
-    // https://github.com/PanJiaChen/vue-element-admin/issues/1221
     this.tempRoute = Object.assign({}, this.$route)
   },
   methods: {
+    // Fetch article details
     fetchData(id) {
-      fetchArticle(id).then(response => {
-        this.postForm = response.data
+      getArticle(id).then(response => {
+        const article = response.data
+        this.postForm = {
+          ...this.postForm, // Keep existing values
+          title: article.title,
+          content: article.content,
+          contentShort: article.contentShort,
+          sourceUri: article.sourceUri,
+          visibleRange: article.visibleRange,
+          importance: article.importance,
+          uploadedFiles: article.uploadedFiles || [],
+          categoryId: article.categoryId
+        }
 
-        // just for test
-        this.postForm.title += `   Article Id:${this.postForm.id}`
-        this.postForm.contentShort += `   Article Id:${this.postForm.id}`
-
-        // set tagsview title
-        this.setTagsViewTitle()
-
-        // set page title
-        // this.setPageTitle()
+        this.selectedCategory = [article.categoryId] // Assuming categoryId is directly usable
+        this.author = article.author || this.author // Only set author if it's not already set
       }).catch(err => {
-        console.log(err)
+        console.error(err)
       })
     },
+    // Set page title and other meta details
     setTagsViewTitle() {
       const title = 'Edit Article'
       const route = Object.assign({}, this.tempRoute, { title: `${title}-${this.postForm.id}` })
       this.$store.dispatch('tagsView/updateVisitedView', route)
     },
-    setPageTitle() {
-      const title = 'Edit Article'
-      document.title = `${title} - ${this.postForm.id}`
-    },
     submitForm() {
-      console.log(this.postForm)
       this.$refs.postForm.validate(valid => {
         if (valid) {
           this.loading = true
-          // 使用 Axios 或其他 HTTP 库提交表单数据到后端
-          this.submitToBackend(this.postForm)
+          // 判断是否为编辑状态
+          if (this.isEdit) {
+            // 编辑时，执行更新操作
+            this.submitUpdateArticle(this.postForm)
+          } else {
+            // 发布时，执行创建操作
+            this.submitToBackend(this.postForm)
+          }
         } else {
           console.log('发布失败!')
           return false
@@ -286,17 +283,32 @@ export default {
     },
 
     submitToBackend(formData) {
-      // 使用 Axios 提交json数据
       const jsonData = JSON.stringify(formData)
       createArticle(jsonData)
         .then(response => {
-          // 请求成功后的回调
           console.log('文章发布成功', response.data)
           this.loading = false
         })
         .catch(error => {
-          // 请求失败后的回调
           console.error('发布失败', error)
+          this.loading = false
+        })
+    },
+    submitUpdateArticle(formData) {
+      const articleId = Math.abs(parseInt(this.id, 10))
+      const updatedData = {
+        ...formData, // 保留原有的字段
+        articleId: articleId // 编辑的 id
+      }
+
+      const jsonData = JSON.stringify(updatedData)
+      updateArticle(jsonData)
+        .then(response => {
+          console.log('文章更新成功', response.data)
+          this.loading = false
+        })
+        .catch(error => {
+          console.error('更新发布失败', error)
           this.loading = false
         })
     },
@@ -316,27 +328,25 @@ export default {
       })
       this.postForm.status = 'draft'
     },
-    // 获取当前用户信息
+    // Fetch user info for author field
     fetchUserInfo() {
-      // 假设有方法获取当前登录用户的信息，或者通过接口获取
       getUserInfo().then(response => {
         if (response.data) {
           const user = response.data
-          // 将用户信息填充到表单的author字段
           this.postForm.authorId = user.userId
-          this.author = user.nickname
+          if (!this.author) { // Only set author if not already set by article
+            this.author = user.nickname
+          }
         }
       }).catch(error => {
         console.error('获取用户信息失败', error)
       })
     },
-    // 获取文章分类列表
+    // Fetch article categories
     fetchCategoryList() {
       getArticleCategory().then(response => {
         if (response.data) {
-          // 将学院信息填充到表单的college字段
-          this.categories = JSON.parse(JSON.stringify(response.data.CategoryList)) // 深拷贝
-          console.log('CategoryList:', this.CategoryList)
+          this.categories = JSON.parse(JSON.stringify(response.data.CategoryList)) // Deep copy
         }
       }).catch(error => {
         console.error('获取文章分类失败', error)
@@ -346,19 +356,17 @@ export default {
       this.$refs.fileUploadDialog.visible = true
     },
     handleUploadSuccess(uploadedFiles) {
-      // 更新上传文件列表，上传成功后返回文件信息
       this.uploadedFiles = uploadedFiles.map(file => ({
         fileName: file.name,
-        fileUrl: file.url // 假设返回的数据包含 fileName 和 fileUrl
+        fileUrl: file.url
       }))
     },
     handleCategoryChange(value) {
-      // 这里的 value 是一个数组，包含了从顶级到选中项的所有值
-      // 假设你选择的是某一子分类，直接取最后一个值作为分类ID
       this.postForm.categoryId = value[value.length - 1]
     }
   }
 }
+
 </script>
 
 <style lang="scss" scoped>

@@ -1,13 +1,13 @@
 <template>
-  <article-detail :is-edit="true" />
+  <article-create :is-edit="true" />
 </template>
 
 <script>
-import ArticleDetail from './components/ArticleDetail'
+import ArticleCreate from './components/ArticleCreate.vue'
 
 export default {
   name: 'EditForm',
-  components: { ArticleDetail }
+  components: { ArticleCreate }
 }
 </script>
 

@@ -8,9 +8,9 @@ export function fetchList(query) {
   })
 }
 
-export function fetchArticle(id) {
+export function getArticle(id) {
   return request({
-    url: '/vue-element-admin/article/detail',
+    url: '/v1/article/getArticle',
     method: 'get',
     params: { id }
   })
@@ -39,7 +39,10 @@ export function updateArticle(data) {
   return request({
     url: '/v1/article/updateArticle',
     method: 'post',
-    data
+    data,
+    headers: {
+      'Content-Type': 'application/json' // 设置请求头为 JSON
+    }
   })
 }
 
@@ -64,3 +67,10 @@ export function getArticleListByCategory(params) {
   })
 }
 
+export function getUserArticleList(data) {
+  return request({
+    url: '/v1/article/getUserArticleList',
+    method: 'post',
+    data
+  })
+}

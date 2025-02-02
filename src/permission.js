@@ -22,11 +22,11 @@ router.beforeEach(async(to, from, next) => {
 
   if (hasToken) {
     if (to.path === '/login') {
-      // if logged in, redirect to the home page
+      // 如果已经登录，且目标路径为登录页，重定向到首页
       next({ path: '/' })
       NProgress.done() // hack: https://github.com/PanJiaChen/vue-element-admin/pull/2939
     } else {
-      // determine whether the user has obtained his permission roles through getInfo
+      // 确保没有重复跳转
       const hasRoles = store.getters.roles && store.getters.roles.length > 0
       console.log('store.getters.roles: ', store.getters.roles)
       console.log('store.getters.roles.length: ', store.getters.roles.length)
@@ -35,20 +35,16 @@ router.beforeEach(async(to, from, next) => {
         next()
       } else {
         try {
-          // get user info
-          // 获取用户信息和权限信息，存到vuex中
-          const { roles } = await store.dispatch('user/getUserInfo')
-          // generate accessible routes map based on roles
+          // 获取用户信息和权限信息
+          // const { roles } = await store.dispatch('user/getUserInfo')
+          // 根据权限角色生成可访问的路由
           const accessRoutes = await store.dispatch('permission/generateRoutes', store.getters.roles)
-
-          // dynamically add accessible routes
+          // 动态添加可访问的路由
           router.addRoutes(accessRoutes)
-
-          // hack method to ensure that addRoutes is complete
-          // set the replace: true, so the navigation will not leave a history record
+          // 确保路由添加完成后再进行跳转
           next({ ...to, replace: true })
         } catch (error) {
-          // remove token and go to login page to re-login
+          // 捕获错误，重置 token 并跳转到登录页
           // await store.dispatch('user/resetToken')
           console.log('error: ', error)
           Message.error(error || 'Has Error')
