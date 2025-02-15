@@ -36,7 +36,8 @@ router.beforeEach(async(to, from, next) => {
       } else {
         try {
           // 获取用户信息和权限信息
-          // const { roles } = await store.dispatch('user/getUserInfo')
+          // const { roles } =
+          await store.dispatch('user/getUserInfo')
           // 根据权限角色生成可访问的路由
           const accessRoutes = await store.dispatch('permission/generateRoutes', store.getters.roles)
           // 动态添加可访问的路由

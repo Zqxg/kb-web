@@ -164,7 +164,7 @@
 </template>
 
 <script>
-import { getArticleCategory, getUserArticleList } from '@/api/article'
+import { deleteArticle, getArticleCategory, getUserArticleList } from '@/api/article'
 import { Message } from 'element-ui'
 
 export default {
@@ -210,12 +210,12 @@ export default {
         pageIndex: this.currentPage,
         pageSize: this.pageSize,
         title: this.searchQuery.title || '',
-        status: Number(this.searchQuery.status) || -1 // 默认为-1，表示所有状态
+        status: this.searchQuery.status === '0' ? 0 : Number(this.searchQuery.status) || -1 // 默认为-1，表示所有状态
       }
 
       // 调用后端接口获取数据
       getUserArticleList(searchParams).then(response => {
-        if (response.data) {
+        if (response.data.totalCount !== 0) {
           // 深拷贝文章数据，确保不会修改原始数据
           this.articles = JSON.parse(JSON.stringify(response.data.ArticleDataList))
           this.totalArticles = response.data.totalCount
@@ -223,6 +223,9 @@ export default {
           Message.success('获取文章列表成功')
         } else {
           Message.error('未找到匹配的文章')
+          // 清空文章列表
+          this.articles = []
+          this.filteredArticles = []
         }
       }).catch(error => {
         console.error('获取文章列表失败:', error)
@@ -248,11 +251,20 @@ export default {
       this.$router.push({ name: 'Detail', params: { id: article.articleId }})
     },
     deleteArticle(article) {
-      const index = this.articles.findIndex((a) => a.articleId === article.articleId)
-      if (index !== -1) {
-        this.articles.splice(index, 1)
-        this.updateFilteredArticles()
+      // 调用后端接口删除文章
+      const deleteParams = {
+        articleId: article.articleId
       }
+      deleteArticle(deleteParams).then(response => {
+        if (response.data) {
+          const index = this.articles.findIndex((a) => a.articleId === article.articleId)
+          if (index !== -1) {
+            this.articles.splice(index, 1)
+            this.updateFilteredArticles()
+          }
+          Message.success('文章已删除')
+        }
+      })
     },
     getStatusTag(status) {
       switch (status) {

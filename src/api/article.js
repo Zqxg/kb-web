@@ -74,3 +74,11 @@ export function getUserArticleList(data) {
     data
   })
 }
+
+export function deleteArticle(data) {
+  return request({
+    url: '/v1/article/deleteArticle',
+    method: 'post',
+    data
+  })
+}
