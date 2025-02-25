@@ -2,7 +2,7 @@
   <div class="knowledge-home">
     <!-- 上部分：搜索框 -->
     <div class="top-section">
-      <SearchBar @search="handleSearch" />
+      <SearchBar :categories="categories" @search="handleSearch" />
     </div>
 
     <!-- 下部分：灰色背景，居中模块，80%宽度 -->
@@ -12,7 +12,7 @@
         <!-- 左侧部分：目录分类、标签、热门知识 -->
         <div class="left-side">
           <div class="card">
-            <CategoryList :categories="categories" @select="handleCategorySelect" />
+            <CategoryList :categories="categories" @select="handleCategorySelect" @categories="handleCategories" />
           </div>
           <div class="card">
             <TagList :tags="tags" @clickTag="handleTagClick" />
@@ -68,6 +68,11 @@ export default {
     },
     handleViewArticle(articleId) {
       console.log('查看文章 ID：', articleId)
+    },
+    handleCategories(categories) {
+      console.log('接收到的分类数据:', categories)
+      this.categories = categories // 更新父组件的 categories 数据
+      console.log('更新后的 categories:', this.categories)
     }
   }
 }

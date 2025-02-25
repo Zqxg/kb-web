@@ -22,7 +22,8 @@ import { getArticleCategory } from '@/api/article'
 export default {
   data() {
     return {
-      categories: [] // 存储分类列表
+      categories: [], // 存储分类列表
+      allCategories: [] // 存储所有分类列表
     }
   },
   mounted() {
@@ -32,8 +33,11 @@ export default {
     fetchCollegeList() {
       getArticleCategory().then(response => {
         if (response.data && response.data.CategoryList) {
+          this.allCategories = response.data.CategoryList
           this.categories = this.getTopLevelCategories(response.data.CategoryList)
         }
+        // 传给父组件
+        this.$emit('categories', this.allCategories)
       }).catch(error => {
         console.error('获取文章分类失败', error)
       })

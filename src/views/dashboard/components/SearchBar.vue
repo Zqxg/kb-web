@@ -6,28 +6,139 @@
       <h1 class="system-title">罗道知库 Pathfinder</h1>
     </div>
     <div class="search-bar">
+      <!-- 多级级联选择框 -->
+      <el-cascader
+        v-model="selectedCategories"
+        class="category-select"
+        :options="categories"
+        multiple
+        filterable
+        clearable
+        placeholder="选择分类"
+        :props="{ checkStrictly: true, label: 'label', emitPath: false,multiple: true }"
+        @change="handleCategoryChange"
+      />
+      <!-- 搜索框 -->
       <input
         v-model="searchQuery"
         type="text"
         class="search-input"
         placeholder="请输入关键词进行搜索..."
       >
-      <button class="search-button" @click="handleSearch">搜索</button>
+      <button class="search-button" @click="handleSearch">
+        <svg-icon icon-class="search" />
+      </button>
     </div>
   </div>
 </template>
 
 <script>
+import { getArticleCategory, getArticleListByEs } from '@/api/article'
+import { Message } from 'element-ui'
+import { mapActions } from 'vuex'
+
 export default {
   data() {
     return {
-      searchQuery: ''
+      searchQuery: '',
+      selectedCategories: [], // 用于存储选择的分类
+      categories: [], // 存储所有的分类数据
+      formData: {
+        mainProductArr: [],
+        mainProductName: ''
+      }
     }
   },
+  mounted() {
+    this.fetchCategories()
+  },
   methods: {
+    // 获取分类数据
+    fetchCategories() {
+      getArticleCategory().then(response => {
+        if (response.data && response.data.CategoryList) {
+          this.categories = this.transformCategories(response.data.CategoryList)
+        }
+      }).catch(error => {
+        Message.error('获取分类失败: ' + error.message)
+      })
+    },
+    // 处理分类数据，转换成 el-cascader 需要的格式
+    transformCategories(categories) {
+      return categories.map(category => ({
+        value: category.cid,
+        label: category.categoryName,
+        children: category.children && category.children.length
+          ? this.transformCategories(category.children)
+          : [], // 如果没有子类目，递归处理
+        disabled: category.isVariety === 0 // 判断是否禁用
+      }))
+    },
+    // 处理选择变化
+    handleCategoryChange(value) {
+      const textArr = []
+      // 如果选择超过3个，弹出提示
+      if (value.length > 3) {
+        value.splice(-2, 1)
+        this.$message.warning('最多只能选择三种分类')
+      }
+      // 获取选择的分类名称
+      value.forEach(id => {
+        const itemValue = this.findCategoryById(id)
+        textArr.push(itemValue.label)
+      })
+      this.formData.mainProductName = textArr.join(',')
+      this.formData.mainProductArr = value
+    },
+    // 通过ID查找分类名称
+    findCategoryById(id) {
+      return this._findCategoryById(this.categories, id)
+    },
+    _findCategoryById(categories, id) {
+      for (const category of categories) {
+        if (category.value === id) {
+          return category
+        }
+        if (category.children && category.children.length) {
+          const found = this._findCategoryById(category.children, id)
+          if (found) return found
+        }
+      }
+      return null
+    },
+    ...mapActions(['setSearchResults']), // 使用 Vuex action 来存储搜索结果
+
     handleSearch() {
       if (this.searchQuery.trim()) {
-        console.log('搜索内容：', this.searchQuery)
+        // 构建请求数据
+        const requestData = {
+          advSearch: true,
+          categories: this.selectedCategories,
+          column: '_score',
+          content: this.searchQuery,
+          keywords: [this.searchQuery],
+          order: 'desc',
+          pageIndex: 1,
+          pageSize: 10,
+          phraseMatch: true,
+          searchMode: '0',
+          title: this.searchQuery
+        }
+
+        // 发起搜索请求
+        getArticleListByEs(requestData).then(res => {
+          if (res.code === 0) {
+            // 存储搜索结果到 Vuex
+            this.setSearchResults(res.data.articles)
+
+            // 跳转到结果页面
+            this.$router.push({ name: 'SearchResults' })
+          } else {
+            Message.error('搜索失败:' + res.message)
+          }
+        }, error => {
+          Message.error('搜索失败: ' + error.message)
+        })
       }
     }
   }
@@ -72,7 +183,7 @@ export default {
   justify-content: center;
   align-items: center;
   margin: 20px auto;
-  width: 50%; /* 搜索框宽度 */
+  width: 100%; /* 搜索框宽度 */
   max-width: 600px; /* 限制最大宽度 */
 }
 
@@ -87,6 +198,8 @@ export default {
   outline: none;
   transition: all 0.3s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 600px;
+  height: 55px;
 }
 
 .search-input:focus {
@@ -106,6 +219,7 @@ export default {
   cursor: pointer;
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  height: 55px;
 }
 
 .search-button:hover {
@@ -164,4 +278,10 @@ export default {
     font-size: 12px;
   }
 }
+
+.category-select {
+  width: 120px;
+  margin-right: 10px;
+}
+
 </style>

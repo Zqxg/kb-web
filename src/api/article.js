@@ -82,3 +82,11 @@ export function deleteArticle(data) {
     data
   })
 }
+
+export function getArticleListByEs(data) {
+  return request({
+    url: '/v1/article/getArticleListByEs',
+    method: 'post',
+    data
+  })
+}
