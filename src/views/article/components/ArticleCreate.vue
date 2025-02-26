@@ -288,6 +288,7 @@ export default {
         .then(response => {
           console.log('文章发布成功', response.data)
           this.loading = false
+          this.$router.push({ path: `/article/detail/${response.data.articleId}` })
         })
         .catch(error => {
           console.error('发布失败', error)

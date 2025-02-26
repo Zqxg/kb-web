@@ -2,7 +2,7 @@
   <div class="article-card">
     <!-- 封面区 -->
     <div class="book-cover" :style="{ background: randomGradient }">
-      <h3 class="book-title">{{ article.title }}</h3>
+      <h3 class="book-title" @click="goToDetail(article.articleId)">{{ article.title }}</h3>
       <p class="book-author">
         <i class="el-icon-s-check" /> {{ article.author }}
       </p>
@@ -64,6 +64,10 @@ export default {
     formatDate(dateString) {
       const date = new Date(dateString)
       return date.toLocaleDateString() // 可以根据需要调整日期格式
+    },
+    goToDetail(articleId) {
+      // 跳转到文章详情页，传递 articleId
+      this.$router.push({ path: `/article/detail/${articleId}` })
     },
     generateRandomGradient() {
       const colors = [

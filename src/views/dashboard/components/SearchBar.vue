@@ -1,10 +1,5 @@
 <template>
   <div class="header">
-    <div class="logo-container">
-      <!-- 系统名称和图标 -->
-      <img src="@/assets/logo.png" alt="Logo" class="logo">
-      <h1 class="system-title">罗道知库 Pathfinder</h1>
-    </div>
     <div class="search-bar">
       <!-- 多级级联选择框 -->
       <el-cascader
@@ -35,18 +30,19 @@
 <script>
 import { getArticleCategory, getArticleListByEs } from '@/api/article'
 import { Message } from 'element-ui'
-import { mapActions } from 'vuex'
 
 export default {
   data() {
     return {
       searchQuery: '',
       selectedCategories: [], // 用于存储选择的分类
+      selectedCategoriesName: [], // 用于存储选择的分类名称
       categories: [], // 存储所有的分类数据
       formData: {
         mainProductArr: [],
         mainProductName: ''
-      }
+      },
+      searchResults: []
     }
   },
   mounted() {
@@ -82,10 +78,13 @@ export default {
         value.splice(-2, 1)
         this.$message.warning('最多只能选择三种分类')
       }
+      // 清空 selectedCategoriesName，确保同步
+      this.selectedCategoriesName = []
       // 获取选择的分类名称
       value.forEach(id => {
         const itemValue = this.findCategoryById(id)
         textArr.push(itemValue.label)
+        this.selectedCategoriesName.push(itemValue.label)
       })
       this.formData.mainProductName = textArr.join(',')
       this.formData.mainProductArr = value
@@ -106,11 +105,10 @@ export default {
       }
       return null
     },
-    ...mapActions(['setSearchResults']), // 使用 Vuex action 来存储搜索结果
-
     handleSearch() {
       if (this.searchQuery.trim()) {
         // 构建请求数据
+        const uniqueCategories = [...new Set(this.selectedCategoriesName)]
         const requestData = {
           advSearch: true,
           categories: this.selectedCategories,
@@ -118,8 +116,8 @@ export default {
           content: this.searchQuery,
           keywords: [this.searchQuery],
           order: 'desc',
-          pageIndex: 1,
-          pageSize: 10,
+          pageIndex: 1, // 默认页码1
+          pageSize: 10, // 默认每页10条
           phraseMatch: true,
           searchMode: '0',
           title: this.searchQuery
@@ -128,15 +126,25 @@ export default {
         // 发起搜索请求
         getArticleListByEs(requestData).then(res => {
           if (res.code === 0) {
-            // 存储搜索结果到 Vuex
-            this.setSearchResults(res.data.articles)
+            // 存储搜索结果
+            this.searchResults = res.data
 
             // 跳转到结果页面
-            this.$router.push({ name: 'SearchResults' })
+            this.$router.push({ path: '/search', query: {
+              query: this.searchQuery,
+              categoriesName: uniqueCategories.join(','),
+              selectedCategories: JSON.stringify(this.selectedCategories),
+              searchResults: JSON.stringify(this.searchResults) }})
+
+            // 传给父组件
+            this.$emit('searchResults', JSON.stringify(this.searchResults))
+            this.$emit('categoriesName', uniqueCategories.join(','))
+            this.$emit('selectedCategories', JSON.stringify(this.selectedCategories))
+            this.$emit('query', this.searchQuery)
           } else {
             Message.error('搜索失败:' + res.message)
           }
-        }, error => {
+        }).catch(error => {
           Message.error('搜索失败: ' + error.message)
         })
       }
@@ -150,31 +158,6 @@ export default {
 .header {
   text-align: center;
   margin-bottom: 20px;
-}
-
-/* 系统名称和图标的容器 */
-.logo-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 20px; /* 系统名称和搜索框之间的间距 */
-  flex-direction: row;
-  gap: 10px;
-  margin-top: 30px;
-}
-
-/* 图标样式 */
-.logo {
-  width: 80px; /* 图标大小 */
-  height: 80px;
-}
-
-/* 系统名称样式 */
-.system-title {
-  font-size: 36px; /* 字体大小 */
-  color: #333;
-  font-weight: bold;
-  margin: 0;
 }
 
 /* 搜索框容器 */

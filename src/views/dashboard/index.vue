@@ -2,6 +2,11 @@
   <div class="knowledge-home">
     <!-- 上部分：搜索框 -->
     <div class="top-section">
+      <div class="logo-container">
+        <!-- 系统名称和图标 -->
+        <img src="@/assets/logo.png" alt="Logo" class="logo">
+        <h1 class="system-title">罗道知库 Pathfinder</h1>
+      </div>
       <SearchBar :categories="categories" @search="handleSearch" />
     </div>
 
@@ -70,15 +75,37 @@ export default {
       console.log('查看文章 ID：', articleId)
     },
     handleCategories(categories) {
-      console.log('接收到的分类数据:', categories)
       this.categories = categories // 更新父组件的 categories 数据
-      console.log('更新后的 categories:', this.categories)
     }
   }
 }
 </script>
 
 <style scoped>
+/* 系统名称和图标的容器 */
+.logo-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 20px; /* 系统名称和搜索框之间的间距 */
+  flex-direction: row;
+  gap: 10px;
+  margin-top: 30px;
+}
+
+/* 图标样式 */
+.logo {
+  width: 80px; /* 图标大小 */
+  height: 80px;
+}
+
+/* 系统名称样式 */
+.system-title {
+  font-size: 36px; /* 字体大小 */
+  color: #333;
+  font-weight: bold;
+  margin: 0;
+}
 
 .top-section {
   background-color: white;

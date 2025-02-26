@@ -125,7 +125,8 @@ export const constantRoutes = [
         name: 'Guide',
         meta: { title: 'Guide', icon: 'guide', noCache: true }
       }
-    ]
+    ],
+    hidden: true
   },
   {
     path: '/profile',
@@ -262,6 +263,24 @@ export const asyncRoutes = [
         component: () => import('@/views/common-doc-list/index'),
         name: '目录浏览',
         meta: { title: '目录浏览', icon: 'list' }
+      }
+    ]
+  },
+  {
+    path: '/search',
+    name: 'Search',
+    component: Layout,
+    redirect: '/search/index',
+    meta: {
+      title: '搜索',
+      icon: 'search'
+    },
+    children: [
+      {
+        path: 'index',
+        component: () => import('@/views/search/index'),
+        name: 'Search',
+        meta: { title: '搜索', icon: 'search' }
       }
     ]
   },
