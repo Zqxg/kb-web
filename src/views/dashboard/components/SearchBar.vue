@@ -51,13 +51,15 @@ export default {
   methods: {
     // 获取分类数据
     fetchCategories() {
-      getArticleCategory().then(response => {
-        if (response.data && response.data.CategoryList) {
-          this.categories = this.transformCategories(response.data.CategoryList)
-        }
-      }).catch(error => {
-        Message.error('获取分类失败: ' + error.message)
-      })
+      if (this.categories.length === 0) {
+        getArticleCategory().then(response => {
+          if (response.data && response.data.CategoryList) {
+            this.categories = this.transformCategories(response.data.CategoryList)
+          }
+        }).catch(error => {
+          Message.error('获取分类失败: ' + error.message)
+        })
+      }
     },
     // 处理分类数据，转换成 el-cascader 需要的格式
     transformCategories(categories) {
@@ -110,16 +112,16 @@ export default {
         // 构建请求数据
         const uniqueCategories = [...new Set(this.selectedCategoriesName)]
         const requestData = {
-          advSearch: true,
+          advSearch: false,
           categories: this.selectedCategories,
           column: '_score',
           content: this.searchQuery,
           keywords: [this.searchQuery],
           order: 'desc',
+          importance: '-1',
           pageIndex: 1, // 默认页码1
           pageSize: 10, // 默认每页10条
-          phraseMatch: true,
-          searchMode: '0',
+          phraseMatch: false,
           title: this.searchQuery
         }
 

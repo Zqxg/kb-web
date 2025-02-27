@@ -31,16 +31,18 @@ export default {
   },
   methods: {
     fetchCollegeList() {
-      getArticleCategory().then(response => {
-        if (response.data && response.data.CategoryList) {
-          this.allCategories = response.data.CategoryList
-          this.categories = this.getTopLevelCategories(response.data.CategoryList)
-        }
-        // 传给父组件
-        this.$emit('categories', this.allCategories)
-      }).catch(error => {
-        console.error('获取文章分类失败', error)
-      })
+      if (this.allCategories.length === 0) {
+        getArticleCategory().then(response => {
+          if (response.data && response.data.CategoryList) {
+            this.allCategories = response.data.CategoryList
+            this.categories = this.getTopLevelCategories(response.data.CategoryList)
+          }
+          // 传给父组件
+          this.$emit('categories', this.allCategories)
+        }).catch(error => {
+          console.error('获取文章分类失败', error)
+        })
+      }
     },
     getTopLevelCategories(categories) {
       return categories.filter(category => category.level === 1).map(category => ({
